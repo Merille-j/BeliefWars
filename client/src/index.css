@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base */
+html, body, #root {
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #111827; }
+::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+
+/* Smooth transitions (not on canvas)  */
+* {
+  transition-property: color, background-color, border-color, opacity;
+  transition-duration: 150ms;
+  transition-timing-function: ease-in-out;
+}
+canvas { transition: none !important; }
+
+/* Glow helpers */
+.glow-green  { box-shadow: 0 0 20px rgba(0, 255, 136, 0.3); }
+.glow-blue   { box-shadow: 0 0 20px rgba(0, 170, 255, 0.3); }
+.glow-red    { box-shadow: 0 0 20px rgba(255, 51, 51, 0.3); }
+
+/* Tactical grid background */
+.tactical-bg {
+  background-color: #0a0e1a;
+  background-image:
+    linear-gradient(rgba(0, 255, 136, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 136, 0.03) 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+/* Animations */
+@keyframes phaseTransition {
+  0%   { opacity: 0; transform: translateX(-10px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+.phase-enter { animation: phaseTransition 0.3s ease-out; }
+
+@keyframes tacticalPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+.tactical-pulse { animation: tacticalPulse 1.5s ease-in-out infinite; }
+
+/* Heatmap canvas — always square, fills its container */
+.heatmap-canvas-wrapper {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.heatmap-canvas-wrapper canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
