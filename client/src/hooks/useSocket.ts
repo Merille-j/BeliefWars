@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useGameStore } from '../store/gameStore';
-import { ClientAction, SerializedGameState, GameRole } from '../types/client.types';
+import { ClientAction, SerializedGameState, GameRole, GamePhase } from '../types/client.types';
 
 const SOCKET_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
 
@@ -42,16 +42,55 @@ export function useSocket() {
         message: data.message,
         type: alertType,
       });
-
-      // Auto-dismiss after 3 seconds
-      setTimeout(() => {
-        useGameStore.getState().dismissAlert();
-      }, 3000);
+      // Auto-dismiss is handled exclusively by AlertOverlay's useEffect
     };
 
     const onEnd = (data: { winner: GameRole; state: SerializedGameState }) => {
       if (data.state) setGameState(data.state);
       setMatchOver(data.winner);
+    };
+
+    const onPhaseEnd = (data: { phase: GamePhase; humanRole: GameRole }) => {
+      const { setBanner, cyclesCompleted, cyclesPerRound } = useGameStore.getState();
+      // Cycle boundary: COLLAPSE just ended and it was NOT the last cycle
+      const isCycleBoundary = data.phase === GamePhase.COLLAPSE && cyclesCompleted < cyclesPerRound - 1;
+      if (isCycleBoundary) {
+        setBanner({
+          type: 'cycle_end',
+          phase: data.phase,
+          humanRole: data.humanRole,
+          cycleNumber: cyclesCompleted + 1,
+        });
+      } else {
+        setBanner({
+          type: 'phase_end',
+          phase: data.phase,
+          humanRole: data.humanRole,
+        });
+      }
+    };
+
+    const onRoundEnd = (data: {
+      round: number;
+      winner: GameRole;
+      humanWon: boolean;
+      humanRole: GameRole;
+      winCondition: 'objectives_completed' | 'ghost_locked' | 'ghost_survived';
+      objectivesCompleted: number;
+      humanWins: number;
+      aiWins: number;
+    }) => {
+      useGameStore.getState().setBanner({
+        type: 'round_end',
+        round: data.round,
+        winner: data.winner,
+        humanWon: data.humanWon,
+        humanRole: data.humanRole,
+        winCondition: data.winCondition,
+        objectivesCompleted: data.objectivesCompleted,
+        humanWins: data.humanWins,
+        aiWins: data.aiWins,
+      });
     };
 
     const onConnect = () => {
@@ -72,6 +111,8 @@ export function useSocket() {
     socket.on('game:update', onUpdate);
     socket.on('game:alert', onAlert);
     socket.on('game:end', onEnd);
+    socket.on('game:phase_end', onPhaseEnd);
+    socket.on('game:round_end', onRoundEnd);
 
     return () => {
       socket.off('connect', onConnect);
@@ -80,6 +121,8 @@ export function useSocket() {
       socket.off('game:update', onUpdate);
       socket.off('game:alert', onAlert);
       socket.off('game:end', onEnd);
+      socket.off('game:phase_end', onPhaseEnd);
+      socket.off('game:round_end', onRoundEnd);
     };
   }, [setGameState, setAlert, setMatchOver]);
 

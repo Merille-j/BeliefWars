@@ -7,6 +7,7 @@ import { ActionPanel } from './ActionPanel';
 import { PhaseIndicator } from './PhaseIndicator';
 import { RoundTracker } from './RoundTracker';
 import { AlertOverlay } from './AlertOverlay';
+import { BannerOverlay } from './BannerOverlay';
 import { RoundHistory } from './RoundHistory';
 import {
   ClientAction,
@@ -37,14 +38,16 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onAction }) => {
   useEffect(() => {
     if (humanRole === GameRole.GHOST && phase === GamePhase.OBJECTIVE) {
       setPendingAction('move');
-    } else if (phase !== GamePhase.OBJECTIVE && pendingAction === 'move') {
-      setPendingAction('none');
+    } else if (phase !== GamePhase.OBJECTIVE) {
+      // Clear move mode when leaving OBJECTIVE phase; leave other modes alone
+      const current = useGameStore.getState().pendingAction;
+      if (current === 'move') setPendingAction('none');
     }
     // Clear A* path when leaving OBJECTIVE phase
     if (phase !== GamePhase.OBJECTIVE) {
       useGameStore.getState().setSuggestedPath(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, humanRole]);
 
   const handleCellClick = useCallback(
@@ -98,6 +101,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onAction }) => {
   return (
     <div className="min-h-screen bg-gray-950 text-white font-mono flex flex-col overflow-x-hidden">
       <AlertOverlay />
+      <BannerOverlay />
 
       {/* ── Top bar ─────────────────────────────────────────────────────── */}
       <div className="flex-shrink-0 bg-gray-900 border-b border-gray-800">

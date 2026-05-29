@@ -13,6 +13,28 @@ import {
   RoundHistoryEntry,
 } from '../types/client.types';
 
+// ─── Banner types ─────────────────────────────────────────────────────────────
+
+export type BannerType = 'phase_end' | 'cycle_end' | 'round_end' | null;
+
+export interface BannerState {
+  type: BannerType;
+  /** Phase that just ended (phase_end / cycle_end) */
+  phase?: GamePhase;
+  /** Role the human is playing this round */
+  humanRole?: GameRole;
+  /** round_end fields */
+  round?: number;
+  winner?: GameRole;
+  humanWon?: boolean;
+  winCondition?: 'objectives_completed' | 'ghost_locked' | 'ghost_survived';
+  objectivesCompleted?: number;
+  humanWins?: number;
+  aiWins?: number;
+  /** Which cycle just completed (1 or 2) */
+  cycleNumber?: number;
+}
+
 interface GameStore {
   // Game state
   gameState: GameState | null;
@@ -43,11 +65,16 @@ interface GameStore {
   /** A* suggested path for the human Ghost — cells to walk through to reach a goal */
   suggestedPath: Array<{ x: number; y: number }> | null;
 
+  /** Banner notification (phase end, cycle end, round end) */
+  banner: BannerState;
+
   // Actions
   setGameState: (state: SerializedGameState) => void;
   setPhase: (phase: GamePhase) => void;
   setAlert: (alert: AlertState) => void;
   dismissAlert: () => void;
+  setBanner: (banner: BannerState) => void;
+  dismissBanner: () => void;
   setMatchOver: (winner: GameRole) => void;
   setPendingAction: (mode: PendingActionMode) => void;
   addSelectedCell: (x: number, y: number) => void;
@@ -80,6 +107,7 @@ export const useGameStore = create<GameStore>((set) => ({
   isMatchOver: false,
   matchWinner: null,
   alert: { active: false, message: '', type: 'info' },
+  banner: { type: null },
   pendingAction: 'none',
   selectedCells: [],
   humanPlayerId: 'human',
@@ -121,6 +149,14 @@ export const useGameStore = create<GameStore>((set) => ({
 
   dismissAlert: () => {
     set({ alert: { active: false, message: '', type: 'info' } });
+  },
+
+  setBanner: (banner: BannerState) => {
+    set({ banner });
+  },
+
+  dismissBanner: () => {
+    set({ banner: { type: null } });
   },
 
   setMatchOver: (winner: GameRole) => {
@@ -171,6 +207,7 @@ export const useGameStore = create<GameStore>((set) => ({
       isMatchOver: false,
       matchWinner: null,
       alert: { active: false, message: '', type: 'info' },
+      banner: { type: null },
       pendingAction: 'none',
       selectedCells: [],
       suggestedPath: null,
