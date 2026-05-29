@@ -189,7 +189,7 @@ export const BannerOverlay: React.FC = () => {
             {wcIcon} {wcText}
             {banner.winCondition !== 'ghost_locked' && (
               <div className="mt-0.5 opacity-70">
-                Objectives captured: {banner.objectivesCompleted} / 5
+                Objectives captured: {banner.objectivesCompleted} / 5 (need 3)
               </div>
             )}
           </div>

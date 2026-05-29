@@ -198,7 +198,7 @@ export class GameEngine {
       })
     );
     // Note: OBJECTIVES_COMPLETED is no longer used as a win trigger.
-    // Ghost wins only if it BOTH survives the final Collapse AND completes ALL objectives.
+    // Ghost wins only if it BOTH survives the final Collapse AND completes ≥3 objectives.
     // That check happens in advancePhase() after the final Collapse.
   }
 
@@ -401,15 +401,15 @@ export class GameEngine {
     if (previousPhase === GamePhase.COLLAPSE) {
       if (isRoundEndingCollapse) {
         // Final cycle complete — evaluate Ghost win condition:
-        // Ghost wins ONLY if it survived AND completed ALL objectives.
+        // Ghost wins ONLY if it survived AND completed at least 3 objectives.
         const allObjectives = this.ghostActions.getObjectives();
         const objCompleted = allObjectives.filter(o => o.completed).length;
-        const ghostWins = objCompleted === allObjectives.length;
+        const ghostWins = objCompleted >= 3;
 
         if (ghostWins) {
           this.matchController.endRound(GameRole.GHOST, 'objectives_completed', objCompleted);
         } else {
-          // Ghost survived but missed at least one objective → Seeker wins
+          // Ghost survived but captured fewer than 3 objectives → Seeker wins
           this.matchController.endRound(GameRole.SEEKER, 'ghost_survived', objCompleted);
         }
         this.startNewRound();

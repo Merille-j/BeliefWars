@@ -149,12 +149,12 @@ export const GameHUD: React.FC = () => {
         <div>
           <div className="flex justify-between text-xs mb-1">
             <span className="text-gray-400">Objectives</span>
-            <span className={`font-bold ${completedCount === objectives.length && objectives.length > 0 ? 'text-green-400' : 'text-yellow-400'}`}>
+            <span className={`font-bold ${completedCount >= 3 ? 'text-green-400' : 'text-yellow-400'}`}>
               {completedCount} / {objectives.length}
-              {completedCount === objectives.length && objectives.length > 0 && <span className="ml-1 text-green-300">✓ WIN</span>}
+              {completedCount >= 3 && <span className="ml-1 text-green-300">✓ WIN</span>}
             </span>
           </div>
-          {/* Threshold marker at all objectives */}
+          {/* Threshold marker at 3 objectives */}
           <div className="relative flex gap-1 mb-1">
             {objectives.map((obj) => (
               <div
@@ -165,9 +165,15 @@ export const GameHUD: React.FC = () => {
                 title={`${obj.label}: ${obj.completed ? 'Completed' : `(${obj.position.x}, ${obj.position.y})`}`}
               />
             ))}
+            {/* Win threshold marker after 3rd bar */}
+            <div
+              className="absolute top-0 bottom-0 w-0.5 bg-green-400 opacity-70"
+              style={{ left: `calc(${(3 / objectives.length) * 100}% - 1px)` }}
+              title="Win threshold: 3 objectives"
+            />
           </div>
           <div className="text-xs text-gray-500 mb-1">
-            Complete <span className="text-green-400 font-bold">ALL</span> {objectives.length} objectives
+            Complete <span className="text-green-400 font-bold">3 of 5</span> objectives
             <span className="text-gray-600"> + survive both Collapses</span>
           </div>
           <div className="flex flex-wrap gap-x-2 text-xs text-gray-500">

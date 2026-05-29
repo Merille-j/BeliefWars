@@ -155,7 +155,7 @@ export const ActionPanel: React.FC<ActionPanelProps> = ({ onAction }) => {
             <div className="text-gray-400 text-xs leading-relaxed">
               Click any highlighted neighbour cell — 1 AP per step, up to {ghostAP} more step{ghostAP !== 1 ? 's' : ''}
             </div>
-            <div className="text-green-600 text-xs mt-1">↑ ↓ ← → only — no diagonals · Complete ALL objectives to win</div>
+            <div className="text-green-600 text-xs mt-1">↑ ↓ ← → only — no diagonals · Complete 3 of 5 objectives to win</div>
           </div>
 
           {/* A* Path Suggestions — one button per incomplete objective */}
