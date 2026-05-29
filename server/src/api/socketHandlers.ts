@@ -50,7 +50,7 @@ export function registerSocketHandlers(io: Server, socket: Socket): void {
 
       // Check for match end
       if (gameEngine.isMatchOver()) {
-        socket.emit('game:end', {
+        io.emit('game:end', {
           winner: gameEngine.getMatchWinner(),
           state,
         });
@@ -90,10 +90,42 @@ export function registerSocketHandlers(io: Server, socket: Socket): void {
     });
   });
 
+  // ─── Phase ended ───────────────────────────────────────────────────────────
+  const unsubPhaseEnded = eventBus.subscribe(EventType.PHASE_ENDED, (payload) => {
+    const p = payload as { phase: string };
+    io.emit('game:phase_end', {
+      phase: p.phase,
+      humanRole: gameEngine.getHumanRole(),
+    });
+  });
+
+  // ─── Round won (also covers cycle boundary) ────────────────────────────────
+  const unsubRoundWon = eventBus.subscribe(EventType.ROUND_WON, (payload) => {
+    const p = payload as {
+      winner: string;
+      round: number;
+      humanWins: number;
+      aiWins: number;
+      entry: { winCondition: string; humanWon: boolean; humanRole: string; objectivesCompleted: number };
+    };
+    io.emit('game:round_end', {
+      round: p.round,
+      winner: p.winner,
+      humanWon: p.entry.humanWon,
+      humanRole: p.entry.humanRole,
+      winCondition: p.entry.winCondition,
+      objectivesCompleted: p.entry.objectivesCompleted,
+      humanWins: p.humanWins,
+      aiWins: p.aiWins,
+    });
+  });
+
   // ─── Disconnect ────────────────────────────────────────────────────────────
   socket.on('disconnect', () => {
     console.log(`[Socket] Client disconnected: ${socket.id}`);
     unsubCollapse();
     unsubEvent();
+    unsubPhaseEnded();
+    unsubRoundWon();
   });
 }

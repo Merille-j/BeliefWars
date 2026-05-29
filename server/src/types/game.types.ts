@@ -264,9 +264,9 @@ export interface RoundHistoryEntry {
   aiRole: GameRole;
   /**
    * How the round ended:
-   * - 'objectives_completed' — Ghost survived both collapses AND completed ≥2 objectives → Ghost wins
+   * - 'objectives_completed' — Ghost survived both collapses AND completed ALL objectives → Ghost wins
    * - 'ghost_locked'         — Seeker locked Ghost during Collapse → Seeker wins
-   * - 'ghost_survived'       — Ghost survived but completed <2 objectives → Seeker wins
+   * - 'ghost_survived'       — Ghost survived but missed at least one objective → Seeker wins
    */
   winCondition: 'objectives_completed' | 'ghost_locked' | 'ghost_survived';
   objectivesCompleted: number;
