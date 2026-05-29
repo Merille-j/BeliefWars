@@ -122,7 +122,7 @@ export class GameEngine {
     this.patternMemory.fullReset();
 
     // Assign roles
-    const assignments = this.roleAssign.assignRoles([this.humanPlayerId]);
+    this.roleAssign.assignRoles([this.humanPlayerId]);
     const humanRole = this.roleAndRoundStore.getRole(this.humanPlayerId) ?? GameRole.GHOST;
     const aiRole = humanRole === GameRole.GHOST ? GameRole.SEEKER : GameRole.GHOST;
 
@@ -135,7 +135,8 @@ export class GameEngine {
       this.beliefEngine,
       this.entityManager,
       this.phaseController,
-      objectives
+      objectives,
+      this.grid
     );
 
     // Reset entities — Ghost starts at a random grid cell, Seeker at bottom-right
@@ -197,7 +198,7 @@ export class GameEngine {
       })
     );
     // Note: OBJECTIVES_COMPLETED is no longer used as a win trigger.
-    // Ghost wins only if it BOTH survives the final Collapse AND has ≥2 objectives.
+    // Ghost wins only if it BOTH survives the final Collapse AND completes ALL objectives.
     // That check happens in advancePhase() after the final Collapse.
   }
 
@@ -234,8 +235,10 @@ export class GameEngine {
     if (phase === GamePhase.COLLAPSE) {
       const seeker = this.entityManager.getEntity(GameRole.SEEKER);
       const ghost = this.entityManager.getEntity(GameRole.GHOST);
-      if (seeker) {
+      if (seeker && seeker.ap > 0) {
         this.cachedRecommendations = this.mcts.evaluate(this.grid, seeker.ap, ghost?.position);
+      } else {
+        this.cachedRecommendations = [];
       }
     } else {
       this.cachedRecommendations = [];
@@ -345,8 +348,8 @@ export class GameEngine {
           if (typeof action.x !== 'number' || typeof action.y !== 'number') return { success: false, message: 'Invalid coordinates' };
           const ghost = this.entityManager.getEntity(GameRole.GHOST);
           if (!ghost) return { success: false, message: 'Ghost entity not found' };
-          this.patternMemory.observeHumanAction('LOCK', action.x, action.y, this.phaseController.currentPhase, this.roleAndRoundStore.currentRound);
           const hit = this.seekerActions.lock(action.x, action.y, ghost.position);
+          this.patternMemory.observeHumanAction('LOCK', action.x, action.y, this.phaseController.currentPhase, this.roleAndRoundStore.currentRound);
           this.recordMove('human', GameRole.SEEKER, 'LOCK', action.x, action.y, hit ? `🔒 HIT at (${action.x},${action.y})` : `Miss at (${action.x},${action.y})`);
           if (hit) {
             return { success: true, message: 'GHOST FOUND! Belief collapsed!' };
@@ -370,6 +373,18 @@ export class GameEngine {
   }
 
   private advancePhase(): void {
+    if (this._advancingPhase) return; // re-entrancy guard
+    this._advancingPhase = true;
+    try {
+      this._doAdvancePhase();
+    } finally {
+      this._advancingPhase = false;
+    }
+  }
+
+  private _advancingPhase = false;
+
+  private _doAdvancePhase(): void {
     const previousPhase = this.phaseController.currentPhase;
 
     // Check if this COLLAPSE is the final one BEFORE advancing
@@ -386,22 +401,24 @@ export class GameEngine {
     if (previousPhase === GamePhase.COLLAPSE) {
       if (isRoundEndingCollapse) {
         // Final cycle complete — evaluate Ghost win condition:
-        // Ghost wins ONLY if it survived AND completed ≥2 objectives.
-        const objCompleted = this.ghostActions.getObjectives().filter(o => o.completed).length;
-        const ghostWins = objCompleted >= 2;
+        // Ghost wins ONLY if it survived AND completed ALL objectives.
+        const allObjectives = this.ghostActions.getObjectives();
+        const objCompleted = allObjectives.filter(o => o.completed).length;
+        const ghostWins = objCompleted === allObjectives.length;
 
         if (ghostWins) {
           this.matchController.endRound(GameRole.GHOST, 'objectives_completed', objCompleted);
         } else {
-          // Ghost survived but didn't complete enough objectives → Seeker wins
+          // Ghost survived but missed at least one objective → Seeker wins
           this.matchController.endRound(GameRole.SEEKER, 'ghost_survived', objCompleted);
         }
         this.startNewRound();
         return;
       }
-      // Cycle 1 done — start cycle 2: diffuse belief and reset Ghost AP
+      // Cycle 1 done — start cycle 2: diffuse belief and reset AP for BOTH roles
       this.beliefEngine.diffuse();
       this.entityManager.resetAP(GameRole.GHOST, 8);
+      this.entityManager.resetAP(GameRole.SEEKER, 10);
       return;
     }
 
@@ -432,6 +449,9 @@ export class GameEngine {
   private checkWinConditions(): void {
     // Belief collapse is handled directly in wireEvents via BELIEF_COLLAPSE event.
     // Auto-advance phase when an entity runs out of AP.
+    // Guard: don't advance if we're already mid-advance (re-entrancy).
+    if (this._advancingPhase) return;
+
     const phase = this.phaseController.currentPhase;
 
     // Seeker out of AP in COLLAPSE → Ghost survived → advance phase (triggers round end)

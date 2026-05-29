@@ -1,10 +1,11 @@
-import { GamePhase, Objective, Position } from '../types/game.types';
+import { Objective, Position } from '../types/game.types';
 import { EventType } from '../types/game.types';
 import { eventBus } from '../core/EventBus';
 import { BeliefStateEngine } from '../core/BeliefStateEngine';
 import { EntityManager } from '../core/EntityManager';
 import { PhaseController } from '../core/PhaseController';
 import { GameRole } from '../types/game.types';
+import { MapGridSystem } from '../core/MapGridSystem';
 
 const DECOY_MAGNITUDE = 0.30;
 const NOISE_MAGNITUDE = 0.15;
@@ -26,7 +27,8 @@ export class GhostActions {
     private beliefEngine: BeliefStateEngine,
     private entityManager: EntityManager,
     private phaseController: PhaseController,
-    private objectives: Objective[]
+    private objectives: Objective[],
+    private grid: MapGridSystem
   ) {}
 
   /**
@@ -57,12 +59,14 @@ export class GhostActions {
   /**
    * Lay False Trail: spike each cell along a path by +20%.
    * Costs 3 AP. Allowed in MANIPULATION phase.
+   * Silently skips any out-of-bounds cells.
    */
   layFalseTrail(cells: Position[]): boolean {
     if (!this.phaseController.validateAction('LAY_FALSE_TRAIL')) return false;
     if (!this.entityManager.deductAP(GameRole.GHOST, FALSE_TRAIL_AP_COST)) return false;
 
     for (const cell of cells) {
+      if (!this.grid.isInBounds(cell.x, cell.y)) continue;
       this.beliefEngine.spike(cell.x, cell.y, FALSE_TRAIL_MAGNITUDE);
     }
     return true;
@@ -71,10 +75,12 @@ export class GhostActions {
   /**
    * Move: update Ghost position one step adjacently (up/down/left/right only).
    * Costs 1 AP. Allowed in OBJECTIVE phase.
-   * Target must be exactly 1 Manhattan step from current position.
+   * Target must be exactly 1 Manhattan step from current position and in bounds.
    */
   move(x: number, y: number): boolean {
     if (!this.phaseController.validateAction('MOVE')) return false;
+
+    if (!this.grid.isInBounds(x, y)) return false;
 
     const ghost = this.entityManager.getEntity(GameRole.GHOST);
     if (!ghost) return false;
@@ -148,9 +154,10 @@ export class GhostActions {
 
   private getCellsInRadius(cx: number, cy: number, radius: number): Position[] {
     const cells: Position[] = [];
-    const GRID_SIZE = 10;
-    for (let y = Math.max(0, cy - radius); y <= Math.min(GRID_SIZE - 1, cy + radius); y++) {
-      for (let x = Math.max(0, cx - radius); x <= Math.min(GRID_SIZE - 1, cx + radius); x++) {
+    const W = this.grid.width;
+    const H = this.grid.height;
+    for (let y = Math.max(0, cy - radius); y <= Math.min(H - 1, cy + radius); y++) {
+      for (let x = Math.max(0, cx - radius); x <= Math.min(W - 1, cx + radius); x++) {
         cells.push({ x, y });
       }
     }

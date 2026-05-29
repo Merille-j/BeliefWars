@@ -38,10 +38,10 @@ export class AIOpponent {
     private grid: MapGridSystem,
     private beliefEngine: BeliefStateEngine,
     private entityManager: EntityManager,
-    private phaseController: PhaseController,
+    private _phaseController: PhaseController,
     private ghostActions: GhostActions,
     private seekerActions: SeekerActions,
-    private roundNumber: number = 1,
+    private _roundNumber: number = 1,
     private memory: HumanPatternMemory = new HumanPatternMemory()
   ) {
     this.astar = new AStarPathfinding();
@@ -222,7 +222,7 @@ export class AIOpponent {
 
       const objectives = this.ghostActions.getObjectives();
       const incomplete = objectives.filter(o => !o.completed);
-      if (incomplete.length === 0) break;
+      if (incomplete.length === 0) break; // all objectives done, stop moving
 
       // Pick nearest incomplete objective
       const target = incomplete.reduce((best, obj) => {
@@ -450,7 +450,7 @@ export class AIOpponent {
   }
 
   updateRound(roundNumber: number): void {
-    this.roundNumber = roundNumber;
+    this._roundNumber = roundNumber;
     this.mcts.reset();
     this.ghostMoveHistory = [];
     // Keep memory — it accumulates across rounds

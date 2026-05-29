@@ -73,7 +73,6 @@ export class HumanPatternMemory {
   private lockFirstCount: number = 0;
 
   // ── Round tracking ────────────────────────────────────────────────────────
-  private currentRound: number = 1;
   private collapseTickCount: number = 0;
   private firstActionThisCollapse: string | null = null;
   private objectivesCompletedThisRound: number[] = [];
@@ -90,7 +89,8 @@ export class HumanPatternMemory {
     round: number,
     objectiveIndex?: number
   ): void {
-    this.currentRound = round;
+    // round is used only to filter stale visited-cell data
+    const currentRound = round;
 
     switch (actionType) {
       case 'THROW_DECOY':
@@ -108,9 +108,9 @@ export class HumanPatternMemory {
       case 'MOVE':
         if (x !== undefined && y !== undefined) {
           increment(this.movementZones, posToQuadrant(x, y));
-          this.visitedCells.push({ x, y, round });
+          this.visitedCells.push({ x, y, round: currentRound });
           // Keep only last 3 rounds of movement data
-          this.visitedCells = this.visitedCells.filter(c => c.round >= round - 2);
+          this.visitedCells = this.visitedCells.filter(c => c.round >= currentRound - 2);
           this.movesThisPhase++;
         }
         break;

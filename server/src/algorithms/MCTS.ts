@@ -204,6 +204,7 @@ export class MCTS {
    * 2. Generate LOCK actions for the single hottest cell in each cluster
    * 3. Generate SCAN actions for cluster centres
    * 4. Add a direct LOCK on the absolute peak cell if probability > threshold
+   * 5. If ghost position is known (AI Seeker), always include a direct lock on it
    */
   private generateCandidateActions(
     grid: MapGridSystem,
@@ -212,6 +213,11 @@ export class MCTS {
   ): Action[] {
     const actions: Action[] = [];
     const allCells = grid.getFlatCells().sort((a, b) => b.probability - a.probability);
+
+    // ── 0. If ghost position is known, always offer a direct lock on it ───
+    if (ghostPosition && seekerAP >= this.LOCK_AP_COST) {
+      actions.push({ type: 'LOCK', playerId: 'ai', x: ghostPosition.x, y: ghostPosition.y });
+    }
 
     // ── 1. Direct lock on the hottest cell if very confident ──────────────
     const hottest = allCells[0];

@@ -25,11 +25,15 @@ export class SeekerActions {
    */
   scan(x: number, y: number, radius: number): boolean {
     if (!this.phaseController.validateAction('SCAN')) return false;
+    if (!this.entityManager.getEntity(GameRole.SEEKER)) return false;
+
+    // Clamp radius to a sane range so a malformed action can't spike the whole grid
+    const safeRadius = Math.max(0, Math.min(radius, 5));
 
     const deducted = this.entityManager.deductAP(GameRole.SEEKER, SCAN_AP_COST);
     if (!deducted) return false;
 
-    this.beliefEngine.scan({ x, y, radius }, SCAN_INCREMENT);
+    this.beliefEngine.scan({ x, y, radius: safeRadius }, SCAN_INCREMENT);
     return true;
   }
 

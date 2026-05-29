@@ -1,4 +1,4 @@
-import { ContingencyPlan, AndOrBranch, AndOrNode, NondeterministicEvent, Action, Position } from '../types/game.types';
+import { ContingencyPlan, AndOrBranch, AndOrNode, NondeterministicEvent, Action } from '../types/game.types';
 import { EventType } from '../types/game.types';
 import { eventBus } from '../core/EventBus';
 import { MapGridSystem } from '../core/MapGridSystem';
@@ -50,7 +50,7 @@ export class AndOrPlanner {
    * Seeker should scan the last known high-probability area.
    */
   private buildFogPlan(
-    region: { x: number; y: number; radius: number },
+    _region: { x: number; y: number; radius: number },
     grid: MapGridSystem
   ): AndOrBranch[] {
     const topCells = grid
