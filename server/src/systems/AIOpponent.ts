@@ -96,6 +96,8 @@ export class AIOpponent {
    * 3. Lay false trails away from the human's least-scanned zone (safe corridor)
    *
    * Falls back to belief-map strategy when confidence is low.
+   * Any remaining AP after the main strategy is spent on random noise/decoys
+   * to keep the belief map noisy and avoid passing silently.
    */
   private aiGhostManipulate(): void {
     const ghost = this.entityManager.getEntity(GameRole.GHOST);
@@ -117,6 +119,7 @@ export class AIOpponent {
         const jx = this.clamp(target.x + Math.floor(Math.random() * 5 - 2), 0, 9);
         const jy = this.clamp(target.y + Math.floor(Math.random() * 5 - 2), 0, 9);
         this.ghostActions.throwDecoy(jx, jy);
+        this.aiRecord(GameRole.GHOST, 'THROW_DECOY', jx, jy, `AI decoy → (${jx},${jy})`);
       }
 
       // Make noise in the human's first-scan zone (reinforce the bait)
@@ -125,6 +128,7 @@ export class AIOpponent {
         const jx = this.clamp(target.x + Math.floor(Math.random() * 4 - 2), 0, 9);
         const jy = this.clamp(target.y + Math.floor(Math.random() * 4 - 2), 0, 9);
         this.ghostActions.makeNoise(jx, jy, 2);
+        this.aiRecord(GameRole.GHOST, 'MAKE_NOISE', jx, jy, `AI noise → (${jx},${jy})`);
       }
 
       // Lay false trail pointing toward the human's most-scanned zone
@@ -140,65 +144,109 @@ export class AIOpponent {
           { x: this.clamp(midX + dx,  0, 9), y: this.clamp(midY + dy,  0, 9) },
         ];
         this.ghostActions.layFalseTrail(trail);
+        this.aiRecord(GameRole.GHOST, 'LAY_FALSE_TRAIL', midX, midY, `AI trail → (${midX},${midY})`);
       }
-      return;
-    }
+    } else {
+      // ── Belief-map fallback (not enough pattern data yet) ─────────────────
+      const topCells = this.beliefEngine.getTopCells(10);
+      const hottest  = topCells[0];
+      const heatNearGhost = hottest
+        ? Math.max(Math.abs(hottest.x - gx), Math.abs(hottest.y - gy)) < 4
+        : false;
 
-    // ── Belief-map fallback (not enough pattern data yet) ─────────────────
-    const topCells = this.beliefEngine.getTopCells(10);
-    const hottest  = topCells[0];
-    const heatNearGhost = hottest
-      ? Math.max(Math.abs(hottest.x - gx), Math.abs(hottest.y - gy)) < 4
-      : false;
-
-    if (heatNearGhost && this.ghostActions.canThrowDecoy()) {
-      const coldFarCell = this.grid
-        .getFlatCells()
-        .filter(c => Math.max(Math.abs(c.x - gx), Math.abs(c.y - gy)) > 4)
-        .sort((a, b) => {
-          const distA = Math.abs(a.x - gx) + Math.abs(a.y - gy);
-          const distB = Math.abs(b.x - gx) + Math.abs(b.y - gy);
-          return (distB - distA * 0.3) - (distA - distB * 0.3);
-        })[0];
-      if (coldFarCell) {
-        this.ghostActions.throwDecoy(coldFarCell.x, coldFarCell.y);
-        if (this.ghostActions.canMakeNoise()) {
-          this.ghostActions.makeNoise(coldFarCell.x, coldFarCell.y, 2);
+      if (heatNearGhost && this.ghostActions.canThrowDecoy()) {
+        const coldFarCell = this.grid
+          .getFlatCells()
+          .filter(c => Math.max(Math.abs(c.x - gx), Math.abs(c.y - gy)) > 4)
+          .sort((a, b) => {
+            const distA = Math.abs(a.x - gx) + Math.abs(a.y - gy);
+            const distB = Math.abs(b.x - gx) + Math.abs(b.y - gy);
+            return (distB - distA * 0.3) - (distA - distB * 0.3);
+          })[0];
+        if (coldFarCell) {
+          this.ghostActions.throwDecoy(coldFarCell.x, coldFarCell.y);
+          this.aiRecord(GameRole.GHOST, 'THROW_DECOY', coldFarCell.x, coldFarCell.y, `AI decoy → (${coldFarCell.x},${coldFarCell.y})`);
+          if (this.ghostActions.canMakeNoise()) {
+            this.ghostActions.makeNoise(coldFarCell.x, coldFarCell.y, 2);
+            this.aiRecord(GameRole.GHOST, 'MAKE_NOISE', coldFarCell.x, coldFarCell.y, `AI noise → (${coldFarCell.x},${coldFarCell.y})`);
+          }
         }
-        return;
+      }
+
+      if (this.ghostActions.canLayFalseTrail() && topCells.length >= 3) {
+        const farHotCell = topCells
+          .filter(c => Math.max(Math.abs(c.x - gx), Math.abs(c.y - gy)) > 3)
+          .sort((a, b) => b.probability - a.probability)[0];
+        if (farHotCell) {
+          const dx = Math.sign(farHotCell.x - gx);
+          const dy = Math.sign(farHotCell.y - gy);
+          const midX = Math.round((gx + farHotCell.x) / 2);
+          const midY = Math.round((gy + farHotCell.y) / 2);
+          const trail = [
+            { x: this.clamp(midX - dx, 0, 9), y: this.clamp(midY - dy, 0, 9) },
+            { x: this.clamp(midX,       0, 9), y: this.clamp(midY,       0, 9) },
+            { x: this.clamp(midX + dx,  0, 9), y: this.clamp(midY + dy,  0, 9) },
+          ];
+          this.ghostActions.layFalseTrail(trail);
+          this.aiRecord(GameRole.GHOST, 'LAY_FALSE_TRAIL', midX, midY, `AI trail → (${midX},${midY})`);
+        }
+      }
+
+      if (this.ghostActions.canThrowDecoy() && topCells.length > 0) {
+        const target = topCells
+          .filter(c => Math.max(Math.abs(c.x - gx), Math.abs(c.y - gy)) > 3)
+          .sort((a, b) => b.probability - a.probability)[0] ?? topCells[0];
+        this.ghostActions.throwDecoy(target.x, target.y);
+        this.aiRecord(GameRole.GHOST, 'THROW_DECOY', target.x, target.y, `AI decoy → (${target.x},${target.y})`);
+      }
+
+      if (this.ghostActions.canMakeNoise()) {
+        const noiseX = this.clamp(gx + (Math.random() > 0.5 ? 4 : -4) + Math.floor(Math.random() * 3 - 1), 0, 9);
+        const noiseY = this.clamp(gy + (Math.random() > 0.5 ? 4 : -4) + Math.floor(Math.random() * 3 - 1), 0, 9);
+        this.ghostActions.makeNoise(noiseX, noiseY, 2);
+        this.aiRecord(GameRole.GHOST, 'MAKE_NOISE', noiseX, noiseY, `AI noise → (${noiseX},${noiseY})`);
       }
     }
 
-    if (this.ghostActions.canLayFalseTrail() && topCells.length >= 3) {
-      const farHotCell = topCells
-        .filter(c => Math.max(Math.abs(c.x - gx), Math.abs(c.y - gy)) > 3)
-        .sort((a, b) => b.probability - a.probability)[0];
-      if (farHotCell) {
-        const dx = Math.sign(farHotCell.x - gx);
-        const dy = Math.sign(farHotCell.y - gy);
-        const midX = Math.round((gx + farHotCell.x) / 2);
-        const midY = Math.round((gy + farHotCell.y) / 2);
-        const trail = [
-          { x: this.clamp(midX - dx, 0, 9), y: this.clamp(midY - dy, 0, 9) },
-          { x: this.clamp(midX,       0, 9), y: this.clamp(midY,       0, 9) },
-          { x: this.clamp(midX + dx,  0, 9), y: this.clamp(midY + dy,  0, 9) },
-        ];
-        this.ghostActions.layFalseTrail(trail);
-        return;
+    // ── Drain any remaining AP with random noise/decoys ───────────────────
+    // Rather than passing silently, spend leftover AP on extra misdirection.
+    this.drainRemainingManipulationAP(gx, gy);
+  }
+
+  /**
+   * Spend any leftover MANIPULATION AP on random noise and decoys far from
+   * the Ghost's actual position. This keeps the belief map noisy and ensures
+   * the AI never silently passes with unspent AP.
+   */
+  private drainRemainingManipulationAP(gx: number, gy: number): void {
+    // Alternate between noise and decoy until AP is exhausted
+    let useNoise = Math.random() > 0.5;
+    let safetyLimit = 10; // prevent infinite loop if AP deduction fails
+
+    while (safetyLimit-- > 0) {
+      if (!this.ghostActions.canMakeNoise() && !this.ghostActions.canThrowDecoy()) break;
+
+      // Pick a random cell at least 3 steps away from the Ghost
+      const rx = this.clamp(
+        gx + (Math.random() > 0.5 ? 1 : -1) * (3 + Math.floor(Math.random() * 5)),
+        0, 9
+      );
+      const ry = this.clamp(
+        gy + (Math.random() > 0.5 ? 1 : -1) * (3 + Math.floor(Math.random() * 5)),
+        0, 9
+      );
+
+      if (useNoise && this.ghostActions.canMakeNoise()) {
+        this.ghostActions.makeNoise(rx, ry, 2);
+        this.aiRecord(GameRole.GHOST, 'MAKE_NOISE', rx, ry, `AI drain noise → (${rx},${ry})`);
+      } else if (this.ghostActions.canThrowDecoy()) {
+        this.ghostActions.throwDecoy(rx, ry);
+        this.aiRecord(GameRole.GHOST, 'THROW_DECOY', rx, ry, `AI drain decoy → (${rx},${ry})`);
+      } else {
+        break;
       }
-    }
 
-    if (this.ghostActions.canThrowDecoy() && topCells.length > 0) {
-      const target = topCells
-        .filter(c => Math.max(Math.abs(c.x - gx), Math.abs(c.y - gy)) > 3)
-        .sort((a, b) => b.probability - a.probability)[0] ?? topCells[0];
-      this.ghostActions.throwDecoy(target.x, target.y);
-    }
-
-    if (this.ghostActions.canMakeNoise()) {
-      const noiseX = this.clamp(gx + (Math.random() > 0.5 ? 4 : -4) + Math.floor(Math.random() * 3 - 1), 0, 9);
-      const noiseY = this.clamp(gy + (Math.random() > 0.5 ? 4 : -4) + Math.floor(Math.random() * 3 - 1), 0, 9);
-      this.ghostActions.makeNoise(noiseX, noiseY, 2);
+      useNoise = !useNoise; // alternate
     }
   }
 
@@ -208,6 +256,9 @@ export class AIOpponent {
    * Uses memory to:
    * - Avoid zones the human Seeker scans most (stay in their blind spots)
    * - Adjust A* cost surface to penalise the human's preferred scan zones
+   *
+   * After reaching all reachable objectives, any remaining AP is spent on
+   * random adjacent moves to low-probability cells (keeps position uncertain).
    */
   private aiGhostMove(): void {
     const ghost = this.entityManager.getEntity(GameRole.GHOST);
@@ -222,7 +273,12 @@ export class AIOpponent {
 
       const objectives = this.ghostActions.getObjectives();
       const incomplete = objectives.filter(o => !o.completed);
-      if (incomplete.length === 0) break; // all objectives done, stop moving
+
+      if (incomplete.length === 0) {
+        // All objectives done — burn remaining AP on random low-prob moves
+        this.drainRemainingMoveAP(currentGhost.position);
+        break;
+      }
 
       // Pick nearest incomplete objective
       const target = incomplete.reduce((best, obj) => {
@@ -242,7 +298,11 @@ export class AIOpponent {
       }
 
       const path = this.astar.findPath(this.grid, currentGhost.position, target.position);
-      if (!path || path.cells.length < 2) break;
+      if (!path || path.cells.length < 2) {
+        // No path to this objective — burn remaining AP on random moves
+        this.drainRemainingMoveAP(currentGhost.position);
+        break;
+      }
 
       let nextStep = path.cells[1];
 
@@ -278,6 +338,8 @@ export class AIOpponent {
         if (alternatives.length > 0) {
           const moved = this.ghostActions.move(alternatives[0].x, alternatives[0].y);
           if (moved) {
+            this.aiRecord(GameRole.GHOST, 'MOVE', alternatives[0].x, alternatives[0].y,
+              `AI loop-break → (${alternatives[0].x},${alternatives[0].y})`);
             this.ghostMoveHistory.push(alternatives[0]);
             if (this.ghostMoveHistory.length > 8) this.ghostMoveHistory.shift();
           }
@@ -301,6 +363,40 @@ export class AIOpponent {
         this.ghostActions.completeObjective(target.id);
       }
     }
+  }
+
+  /**
+   * Burn remaining OBJECTIVE-phase AP on random adjacent moves to low-probability
+   * cells. This keeps the Ghost's position uncertain and avoids a silent pass.
+   */
+  private drainRemainingMoveAP(startPos: Position): void {
+    let safetyLimit = 12;
+    while (this.ghostActions.canMove() && safetyLimit-- > 0) {
+      const currentGhost = this.entityManager.getEntity(GameRole.GHOST);
+      if (!currentGhost) break;
+
+      // Pick the adjacent cell with the lowest probability (safest to step on)
+      const adjacent = this.getAdjacentCells(currentGhost.position)
+        .filter(c => !this.ghostMoveHistory.slice(-2).some(h => h.x === c.x && h.y === c.y))
+        .sort((a, b) => {
+          const ca = this.grid.getCell(a.x, a.y);
+          const cb = this.grid.getCell(b.x, b.y);
+          return (ca?.probability ?? 1) - (cb?.probability ?? 1);
+        });
+
+      if (adjacent.length === 0) break;
+
+      // Pick randomly from the two lowest-probability neighbours for variety
+      const pick = adjacent[Math.floor(Math.random() * Math.min(2, adjacent.length))];
+      const moved = this.ghostActions.move(pick.x, pick.y);
+      if (!moved) break;
+
+      this.aiRecord(GameRole.GHOST, 'MOVE', pick.x, pick.y, `AI wander → (${pick.x},${pick.y})`);
+      this.ghostMoveHistory.push(pick);
+      if (this.ghostMoveHistory.length > 8) this.ghostMoveHistory.shift();
+    }
+    // suppress unused param warning — startPos used implicitly via ghostMoveHistory seed
+    void startPos;
   }
 
   // ─── Seeker AI ────────────────────────────────────────────────────────────
