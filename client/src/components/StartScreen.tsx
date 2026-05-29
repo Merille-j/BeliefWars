@@ -61,7 +61,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
             <p className="mb-2">
               The <span className="text-green-400 font-bold">Ghost</span> spawns randomly, moves
               one step at a time, and must complete{' '}
-              <span className="text-yellow-400 font-bold">2 of 5 objectives</span> to win.
+              <span className="text-yellow-400 font-bold">all 5 objectives</span> to win.
             </p>
             <p>
               The <span className="text-blue-400 font-bold">Seeker</span> uses a live probability
@@ -102,7 +102,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
             <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
               <div className="text-green-400 font-bold mb-2">👻 Ghost Wins By</div>
               <ul className="space-y-1">
-                <li>• Completing <span className="text-yellow-400">2 of 5</span> objectives</li>
+                <li>• Completing <span className="text-yellow-400">ALL 5</span> objectives</li>
                 <li>• <span className="text-yellow-400">AND</span> surviving both Collapses</li>
                 <li>• Misleading the Seeker's heatmap</li>
                 <li>• Moving adjacently (↑↓←→), 8 AP/phase</li>

@@ -235,15 +235,14 @@ export const HeatmapCanvas: React.FC<HeatmapCanvasProps> = ({ onCellClick }) => 
             ctx.fillRect(nx * CELL_SIZE, ny * CELL_SIZE, CELL_SIZE, CELL_SIZE);
           }
         }
-        // Outer border of the noise zone
+        // Outer border — clamped to canvas bounds
+        const bx1 = Math.max(0, hx - radius) * CELL_SIZE + 1;
+        const by1 = Math.max(0, hy - radius) * CELL_SIZE + 1;
+        const bx2 = Math.min(GRID_SIZE, hx + radius + 1) * CELL_SIZE - 2;
+        const by2 = Math.min(GRID_SIZE, hy + radius + 1) * CELL_SIZE - 2;
         ctx.strokeStyle = 'rgba(255,170,0,0.7)';
         ctx.lineWidth = 2;
-        ctx.strokeRect(
-          (hx - radius) * CELL_SIZE + 1,
-          (hy - radius) * CELL_SIZE + 1,
-          (radius * 2 + 1) * CELL_SIZE - 2,
-          (radius * 2 + 1) * CELL_SIZE - 2
-        );
+        ctx.strokeRect(bx1, by1, bx2 - bx1, by2 - by1);
         // Centre icon
         ctx.fillStyle = 'rgba(255,170,0,0.9)';
         ctx.font = `bold ${CELL_SIZE * 0.5}px monospace`;

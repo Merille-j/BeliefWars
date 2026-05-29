@@ -5,9 +5,9 @@ import { GameRole, GamePhase, MoveRecord, RoundHistoryEntry } from '../types/cli
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const WIN_CONDITION: Record<string, { label: string; icon: string; color: string }> = {
-  objectives_completed: { label: 'Ghost: 2+ objectives + survived', icon: '🎯', color: 'text-green-400' },
-  ghost_locked:         { label: 'Seeker: Ghost locked',            icon: '🔒', color: 'text-red-400'   },
-  ghost_survived:       { label: 'Seeker: Ghost had <2 objectives', icon: '❌', color: 'text-red-400'   },
+  objectives_completed: { label: 'Ghost: all objectives + survived', icon: '🎯', color: 'text-green-400' },
+  ghost_locked:         { label: 'Seeker: Ghost locked',             icon: '🔒', color: 'text-red-400'   },
+  ghost_survived:       { label: 'Seeker: Ghost missed objectives',  icon: '❌', color: 'text-red-400'   },
 };
 
 const PHASE_COLOR: Record<string, string> = {
