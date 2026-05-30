@@ -10,7 +10,7 @@ A tactical stealth-strategy game where a Ghost tries to complete objectives whil
 
 - **Belief-State Heatmap**: The Seeker sees a live probability heatmap showing where the Ghost might be. Probability percentages are displayed on every cell. The Ghost manipulates this heatmap using decoys, noise, and false trails.
 - **2-Cycle Round Structure**: Each round runs two full cycles of Recon → Manipulation → Objective → AND/OR Events → Collapse before a winner is decided.
-- **Ghost wins a round** by completing **2 of 5 objectives** before being locked.
+- **Ghost wins a round** by completing **3 of 5 objectives** before being locked.
 - **Seeker wins a round** by locking the Ghost's exact cell during Collapse.
 - **Best-of-3 Match**: First player to win 2 rounds wins the match.
 - **Random Role Assignment**: Roles are re-assigned randomly (50/50) at the start of every round — not alternated.
@@ -22,7 +22,7 @@ A tactical stealth-strategy game where a Ghost tries to complete objectives whil
 |---|---|---|---|
 | **Recon** | 20s | Both | Observe the heatmap, plan strategy |
 | **Manipulation** | 20s | Ghost | Throw decoys, make noise, lay false trails |
-| **Objective** | 20s | Ghost | Move adjacently (↑↓←→), complete objectives |
+| **Objective** | 60s | Ghost | Move adjacently (↑↓←→), complete objectives |
 | **AND/OR Events** | 20s | Both | Nondeterministic events (fog, storm, sensor disruption) |
 | **Collapse** | 30s | Seeker | Scan zones and lock onto the Ghost |
 
@@ -102,7 +102,7 @@ belief-wars/
   - 🎯 **Throw Decoy** (2 AP) — spike +30% probability at one cell
   - 📢 **Make Noise** (2 AP) — spike +15% across a 5×5 area
   - 👣 **Lay False Trail** (3 AP) — spike +20% along a 3-cell path
-- **Objective Phase** (8 AP): Move one step at a time (↑↓←→ only, 1 AP per step). Complete **2 of 5 objectives** to win the round.
+- **Objective Phase** (8 AP): Move one step at a time (↑↓←→ only, 1 AP per step). Complete **3 of 5 objectives** to win the round.
 - Ghost spawns at a **random position** each round.
 
 ### Seeker Role (10 AP per Collapse)
@@ -119,8 +119,8 @@ belief-wars/
 Each round consists of **2 full cycles**:
 
 ```
-Cycle 1: RECON (20s) → MANIPULATION (20s) → OBJECTIVE (20s) → EVENTS (20s) → COLLAPSE (30s)
-Cycle 2: RECON (20s) → MANIPULATION (20s) → OBJECTIVE (20s) → EVENTS (20s) → COLLAPSE (30s)
+Cycle 1: RECON (20s) → MANIPULATION (20s) → OBJECTIVE (60s) → EVENTS (20s) → COLLAPSE (30s)
+Cycle 2: RECON (20s) → MANIPULATION (20s) → OBJECTIVE (60s) → EVENTS (20s) → COLLAPSE (30s)
          └── Round ends here ──────────────────────────────────────────────────────────────┘
 ```
 
@@ -157,7 +157,7 @@ After the match ends, the Result Screen shows a full **move-by-move replay** of 
 | Noise magnitude | +15% per cell (radius 2) |
 | False trail magnitude | +20% per cell |
 | Diffusion rate | 10% per tick |
-| Phase timers | 20s (all phases), 30s (Collapse) |
+| Phase timers | 20s for Recon/Manipulation/Events, 60s for Objective, 30s for Collapse |
 | Ghost start | Random cell |
 | Seeker start | (9, 9) |
 
