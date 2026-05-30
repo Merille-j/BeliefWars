@@ -33,6 +33,19 @@ export class AIOpponent {
   private phaseTickCount: number = 0;
   private lastPhase: GamePhase | null = null;
 
+  // ── Grace Period & Random Activation Configuration ───────────────────────
+  /** AI doesn't use pattern learning until this round (e.g., 2 = grace until round 2) */
+  private gracePeriodUntilRound: number = 2;
+  
+  /** Each round, AI has this chance (0-1) to activate pattern learning early */
+  private randomActivationChance: number = 0.25; // 25% chance per round
+  
+  /** Whether pattern learning is currently active this round */
+  private patternLearningActive: boolean = false;
+  
+  /** Whether learning was randomly activated this round (for tracking) */
+  private wasRandomlyActivated: boolean = false;
+
   constructor(
     private role: GameRole,
     private grid: MapGridSystem,
@@ -46,6 +59,23 @@ export class AIOpponent {
   ) {
     this.astar = new AStarPathfinding();
     this.mcts = new MCTS();
+    this.updatePatternLearningStatus();
+  }
+
+  /**
+   * Determine if pattern learning should be active this round.
+   * Either grace period is over OR we randomly activate early.
+   */
+  private updatePatternLearningStatus(): void {
+    if (this._roundNumber >= this.gracePeriodUntilRound) {
+      // Grace period is over — enable pattern learning
+      this.patternLearningActive = true;
+      this.wasRandomlyActivated = false;
+    } else {
+      // Still in grace period — check if we randomly wake up
+      this.wasRandomlyActivated = Math.random() < this.randomActivationChance;
+      this.patternLearningActive = this.wasRandomlyActivated;
+    }
   }
 
   /** Inject a recorder so AI moves are captured in round history */
@@ -66,6 +96,8 @@ export class AIOpponent {
       if (phase === GamePhase.RECON) {
         this.ghostMoveHistory = [];
         this.mcts.reset();
+        // Recalculate pattern learning status at the start of each round
+        this.updatePatternLearningStatus();
       }
     }
     this.phaseTickCount++;
@@ -95,7 +127,7 @@ export class AIOpponent {
    * 2. Make noise in the human's first-scan zone (reinforce the bait)
    * 3. Lay false trails away from the human's least-scanned zone (safe corridor)
    *
-   * Falls back to belief-map strategy when confidence is low.
+   * Falls back to belief-map strategy when confidence is low or pattern learning is disabled.
    * Any remaining AP after the main strategy is spent on random noise/decoys
    * to keep the belief map noisy and avoid passing silently.
    */
@@ -105,7 +137,11 @@ export class AIOpponent {
 
     const gx = ghost.position.x;
     const gy = ghost.position.y;
-    const confidence = this.memory.getConfidence();
+    
+    // Only use pattern confidence if pattern learning is active this round
+    const confidence = this.patternLearningActive 
+      ? this.memory.getConfidence() 
+      : 0;  // Force fallback strategy during grace period or if not randomly activated
 
     // ── Pattern-based strategy (confidence > 0.3 = at least ~6 data points) ─
     if (confidence > 0.3) {
@@ -264,8 +300,13 @@ export class AIOpponent {
     const ghost = this.entityManager.getEntity(GameRole.GHOST);
     if (!ghost) return;
 
-    const mostScannedZone = this.memory.getMostScannedZone();
-    const confidence = this.memory.getConfidence();
+    // Only use pattern memory if pattern learning is active this round
+    const mostScannedZone = this.patternLearningActive 
+      ? this.memory.getMostScannedZone() 
+      : null;
+    const confidence = this.patternLearningActive 
+      ? this.memory.getConfidence() 
+      : 0;
 
     while (this.ghostActions.canMove()) {
       const currentGhost = this.entityManager.getEntity(GameRole.GHOST);
@@ -422,7 +463,11 @@ export class AIOpponent {
 
     const ghost = this.entityManager.getEntity(GameRole.GHOST);
     const ghostPos = ghost?.position;
-    const confidence = this.memory.getConfidence();
+    
+    // Only use pattern confidence if pattern learning is active this round
+    const confidence = this.patternLearningActive 
+      ? this.memory.getConfidence() 
+      : 0;
 
     // ── Pattern-based pre-scan on first tick of COLLAPSE ──────────────────
     if (this.phaseTickCount === 1 && confidence > 0.35 && this.seekerActions.canScan()) {
