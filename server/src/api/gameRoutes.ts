@@ -81,6 +81,21 @@ router.get('/recommendations', (_req: Request, res: Response) => {
 });
 
 /**
+ * POST /api/game/trigger-event
+ * Development-only: force generation of a nondeterministic event and return the new state.
+ */
+router.post('/trigger-event', (_req: Request, res: Response) => {
+  try {
+    const event = (gameEngine as any).triggerEvent ? gameEngine.triggerEvent() : null;
+    const state = gameEngine.getFullState();
+    res.json({ success: true, event, state });
+  } catch (err) {
+    console.error('[gameRoutes] /trigger-event error:', err);
+    res.status(500).json({ success: false, error: 'Failed to trigger event' });
+  }
+});
+
+/**
  * GET /api/game/pathfinding
  * Get A* pathfinding from Ghost's current position to a target.
  * Body: { goalX: number, goalY: number }

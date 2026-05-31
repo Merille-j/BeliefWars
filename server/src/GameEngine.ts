@@ -5,6 +5,7 @@ import {
   SerializedGameState,
   MoveRecord,
   MCTSRecommendation,
+  NondeterministicEvent,
 } from './types/game.types';
 import { EventType } from './types/game.types';
 import { eventBus } from './core/EventBus';
@@ -103,6 +104,15 @@ export class GameEngine {
     // Initialize algorithms
     this.mcts = new MCTS();
     this.patternMemory = new HumanPatternMemory();
+  }
+
+  /**
+   * Development helper: force-generate a nondeterministic event immediately.
+   * Returns the generated event or null if none was generated.
+   */
+  triggerEvent(): NondeterministicEvent | null {
+    if (!this.isInitialized) return null;
+    return this.eventSystem.generateEvent();
   }
 
   /**
