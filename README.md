@@ -19,7 +19,7 @@ A tactical stealth-strategy game where a Ghost tries to complete objectives whil
 ### 5-Phase Sequence (×2 per round)
 
 | Phase | Duration | Who Acts | What Happens |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **Recon** | 20s | Both | Observe the heatmap, plan strategy |
 | **Manipulation** | 20s | Ghost | Throw decoys, make noise, lay false trails |
 | **Objective** | 60s | Ghost | Move adjacently (↑↓←→), complete objectives |
@@ -72,7 +72,7 @@ npm run build
 
 ## Project Structure
 
-```
+```text
 belief-wars/
 ├── client/                    # React + TypeScript + Vite frontend
 │   ├── src/
@@ -118,16 +118,18 @@ belief-wars/
 
 Each round consists of **2 full cycles**:
 
-```
+```text
 Cycle 1: RECON (20s) → MANIPULATION (20s) → OBJECTIVE (60s) → EVENTS (20s) → COLLAPSE (30s)
 Cycle 2: RECON (20s) → MANIPULATION (20s) → OBJECTIVE (60s) → EVENTS (20s) → COLLAPSE (30s)
          └── Round ends here ──────────────────────────────────────────────────────────────┘
 ```
 
 The round ends early if:
+
 - Seeker locks Ghost → **Seeker wins**
 
 If neither happens after both Collapses:
+
 - Ghost completed ≥2 objectives → **Ghost wins**
 - Ghost completed <2 objectives → **Seeker wins** (Ghost failed the mission)
 
@@ -144,7 +146,7 @@ After the match ends, the Result Screen shows a full **move-by-move replay** of 
 ## Configuration
 
 | Parameter | Value |
-|---|---|
+| --- | --- |
 | Grid size | **10×10** |
 | Objectives per round | **5** (Ghost needs 2 to win) |
 | Cycles per round | **2** |
