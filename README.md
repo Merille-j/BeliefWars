@@ -22,7 +22,7 @@ A tactical stealth-strategy game where a Ghost tries to complete objectives whil
 | --- | --- | --- | --- |
 | **Recon** | 20s | Both | Observe the heatmap, plan strategy |
 | **Manipulation** | 20s | Ghost | Throw decoys, make noise, lay false trails |
-| **Objective** | 90s | Ghost | Move adjacently (↑↓←→), complete objectives |
+| **Objective** | 120s | Ghost | Move adjacently (↑↓←→), complete objectives |
 | **AND/OR Events** | 20s | Both | Nondeterministic events (fog, storm, sensor disruption) |
 | **Collapse** | 30s | Seeker | Scan zones and lock onto the Ghost |
 
@@ -119,8 +119,8 @@ belief-wars/
 Each round consists of **2 full cycles**:
 
 ```text
-Cycle 1: RECON (20s) → MANIPULATION (20s) → OBJECTIVE (90s) → EVENTS (20s) → COLLAPSE (30s)
-Cycle 2: RECON (20s) → MANIPULATION (20s) → OBJECTIVE (90s) → EVENTS (20s) → COLLAPSE (30s)
+Cycle 1: RECON (20s) → MANIPULATION (20s) → OBJECTIVE (120s) → EVENTS (20s) → COLLAPSE (30s)
+Cycle 2: RECON (20s) → MANIPULATION (20s) → OBJECTIVE (120s) → EVENTS (20s) → COLLAPSE (30s)
          └── Round ends here ──────────────────────────────────────────────────────────────┘
 ```
 
@@ -159,7 +159,7 @@ After the match ends, the Result Screen shows a full **move-by-move replay** of 
 | Noise magnitude | +15% per cell (radius 2) |
 | False trail magnitude | +20% per cell |
 | Diffusion rate | 10% per tick |
-| Phase timers | 20s for Recon/Manipulation/Events, 90s for Objective, 30s for Collapse |
+| Phase timers | 20s for Recon/Manipulation/Events, 120s for Objective, 30s for Collapse |
 | Ghost start | Random cell |
 | Seeker start | (9, 9) |
 
