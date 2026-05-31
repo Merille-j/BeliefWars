@@ -9,6 +9,7 @@ import { RoundTracker } from './RoundTracker';
 import { AlertOverlay } from './AlertOverlay';
 import { BannerOverlay } from './BannerOverlay';
 import { RoundHistory } from './RoundHistory';
+import { EventContingencyPanel } from './EventContingencyPanel';
 import {
   ClientAction,
   GamePhase,
@@ -29,6 +30,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onAction }) => {
     setPendingAction,
     addSelectedCell,
     clearSelectedCells,
+    activeEvent,
+    alert,
   } = useGameStore();
   const humanRole = useGameStore(selectHumanRole);
 
@@ -181,6 +184,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onAction }) => {
                         bg-gray-900 border-t lg:border-t-0 lg:border-l border-gray-800
                         lg:overflow-y-auto">
           <GameHUD />
+          <EventContingencyPanel
+            eventType={alert?.payload?.plan?.eventType ?? activeEvent?.type ?? 'fog'}
+            plan={alert?.payload?.plan}
+            affectedRegion={activeEvent?.affectedRegion ?? { x: 0, y: 0, radius: 0 }}
+          />
           <ActionPanel onAction={onAction} />
           <RoundHistory variant="compact" />
           <ActiveEventDisplay />
@@ -192,7 +200,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onAction }) => {
 };
 
 const ActiveEventDisplay: React.FC = () => {
-  const { activeEvent } = useGameStore();
+  const { activeEvent, alert } = useGameStore();
   if (!activeEvent) return null;
 
   const eventLabels: Record<string, { icon: string; label: string; color: string }> = {
@@ -201,13 +209,58 @@ const ActiveEventDisplay: React.FC = () => {
     sensor_disruption: { icon: '📡', label: 'SENSOR DISRUPTION', color: 'text-purple-400 border-purple-700 bg-purple-950' },
   };
   const info = eventLabels[activeEvent.type] ?? { icon: '⚡', label: activeEvent.type.toUpperCase(), color: 'text-white border-gray-600 bg-gray-900' };
+  const plan = alert?.payload?.plan;
 
   return (
-    <div className={`border rounded p-2 text-xs font-mono ${info.color}`}>
-      <div className="font-bold mb-1">{info.icon} {info.label} ACTIVE</div>
-      <div className="text-gray-400">
+    <div className={`border rounded p-3 text-xs font-mono ${info.color} space-y-2`}>
+      {/* Header */}
+      <div className="font-bold text-sm">{info.icon} {info.label} ACTIVE</div>
+      <div className="text-gray-400 text-xs">
         Region: ({activeEvent.affectedRegion.x}, {activeEvent.affectedRegion.y}) r={activeEvent.affectedRegion.radius}
       </div>
+
+      {/* Contingency Plan Branches */}
+      {plan && plan.branches && plan.branches.length >= 2 && (
+        <div className="space-y-2 mt-3 pt-2 border-t border-current border-opacity-20">
+          {/* Branch 1: Seeker Contingency */}
+          <div className="bg-blue-950 border border-blue-700 rounded p-2">
+            <div className="text-blue-400 font-bold text-xs mb-1">🔍 SEEKER CONTINGENCY</div>
+            <div className="text-blue-300 text-xs mb-2">{plan.branches[0].condition}</div>
+            <div className="space-y-1">
+              {plan.branches[0].children && plan.branches[0].children.slice(0, 3).map((child, i) => (
+                <div key={i} className="text-blue-200 text-xs bg-blue-900 px-1.5 py-0.5 rounded truncate">
+                  {child.action?.type === 'SCAN' && `📡 SCAN (${child.action.x},${child.action.y}) r=${child.action.radius}`}
+                  {child.action?.type === 'LOCK' && `🔒 LOCK (${child.action.x},${child.action.y})`}
+                  {!child.action && child.condition}
+                </div>
+              ))}
+              {plan.branches[0].children && plan.branches[0].children.length > 3 && (
+                <div className="text-blue-300 text-xs opacity-70">+{plan.branches[0].children.length - 3} more options</div>
+              )}
+            </div>
+          </div>
+
+          {/* Branch 2: Ghost Contingency */}
+          <div className="bg-green-950 border border-green-700 rounded p-2">
+            <div className="text-green-400 font-bold text-xs mb-1">👻 GHOST CONTINGENCY</div>
+            <div className="text-green-300 text-xs mb-2">{plan.branches[1].condition}</div>
+            <div className="space-y-1">
+              {plan.branches[1].children && plan.branches[1].children.slice(0, 3).map((child, i) => (
+                <div key={i} className="text-green-200 text-xs bg-green-900 px-1.5 py-0.5 rounded truncate">
+                  {child.action?.type === 'MOVE' && `↔️ MOVE (${child.action.x},${child.action.y})`}
+                  {child.action?.type === 'LAY_FALSE_TRAIL' && `👣 TRAIL`}
+                  {child.action?.type === 'MAKE_NOISE' && `📢 NOISE (${child.action.x},${child.action.y})`}
+                  {child.action?.type === 'THROW_DECOY' && `🎯 DECOY (${child.action.x},${child.action.y})`}
+                  {!child.action && child.condition}
+                </div>
+              ))}
+              {plan.branches[1].children && plan.branches[1].children.length > 3 && (
+                <div className="text-green-300 text-xs opacity-70">+{plan.branches[1].children.length - 3} more options</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -35,12 +35,13 @@ export function useSocket() {
       setGameState(state);
     };
 
-    const onAlert = (data: { type: string; message: string }) => {
+    const onAlert = (data: { type: string; message: string; payload?: any }) => {
       const alertType = data.type === 'BELIEF_COLLAPSE' ? 'collapse' : 'event';
       setAlert({
         active: true,
         message: data.message,
         type: alertType,
+        payload: data.payload,
       });
       // Auto-dismiss is handled exclusively by AlertOverlay's useEffect
     };
