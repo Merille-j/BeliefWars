@@ -442,7 +442,7 @@ export class GameEngine {
       this.entityManager.resetAP(GameRole.GHOST, 8);
     }
     if (newPhase === GamePhase.OBJECTIVE) {
-      this.entityManager.resetAP(GameRole.GHOST, 8);
+      this.entityManager.resetAP(GameRole.GHOST, 10);
     }
 
     // Reset Seeker AP at the start of COLLAPSE phase

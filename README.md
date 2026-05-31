@@ -22,7 +22,7 @@ A tactical stealth-strategy game where a Ghost tries to complete objectives whil
 | --- | --- | --- | --- |
 | **Recon** | 20s | Both | Observe the heatmap, plan strategy |
 | **Manipulation** | 20s | Ghost | Throw decoys, make noise, lay false trails |
-| **Objective** | 60s | Ghost | Move adjacently (↑↓←→), complete objectives |
+| **Objective** | 90s | Ghost | Move adjacently (↑↓←→), complete objectives |
 | **AND/OR Events** | 20s | Both | Nondeterministic events (fog, storm, sensor disruption) |
 | **Collapse** | 30s | Seeker | Scan zones and lock onto the Ghost |
 
@@ -95,14 +95,14 @@ belief-wars/
 
 ## Gameplay
 
-### Ghost Role (8 AP per phase)
+### Ghost Role (8 AP Manipulation, 10 AP Objective)
 
 - **Recon Phase**: Observe the heatmap — bright zones are where the Seeker suspects you
 - **Manipulation Phase** (8 AP):
   - 🎯 **Throw Decoy** (2 AP) — spike +30% probability at one cell
   - 📢 **Make Noise** (2 AP) — spike +15% across a 5×5 area
   - 👣 **Lay False Trail** (3 AP) — spike +20% along a 3-cell path
-- **Objective Phase** (8 AP): Move one step at a time (↑↓←→ only, 1 AP per step). Complete **3 of 5 objectives** to win the round.
+- **Objective Phase** (10 AP): Move one step at a time (↑↓←→ only, 1 AP per step). Complete **3 of 5 objectives** to win the round.
 - Ghost spawns at a **random position** each round.
 
 ### Seeker Role (10 AP per Collapse)
@@ -119,8 +119,8 @@ belief-wars/
 Each round consists of **2 full cycles**:
 
 ```text
-Cycle 1: RECON (20s) → MANIPULATION (20s) → OBJECTIVE (60s) → EVENTS (20s) → COLLAPSE (30s)
-Cycle 2: RECON (20s) → MANIPULATION (20s) → OBJECTIVE (60s) → EVENTS (20s) → COLLAPSE (30s)
+Cycle 1: RECON (20s) → MANIPULATION (20s) → OBJECTIVE (90s) → EVENTS (20s) → COLLAPSE (30s)
+Cycle 2: RECON (20s) → MANIPULATION (20s) → OBJECTIVE (90s) → EVENTS (20s) → COLLAPSE (30s)
          └── Round ends here ──────────────────────────────────────────────────────────────┘
 ```
 
@@ -150,7 +150,7 @@ After the match ends, the Result Screen shows a full **move-by-move replay** of 
 | Grid size | **10×10** |
 | Objectives per round | **5** (Ghost needs 2 to win) |
 | Cycles per round | **2** |
-| Ghost AP per phase | **8** |
+| Ghost AP per phase | **8 / 10** |
 | Seeker AP per Collapse | **10** |
 | Scan cost | 2 AP |
 | Lock cost | 4 AP |
@@ -159,7 +159,7 @@ After the match ends, the Result Screen shows a full **move-by-move replay** of 
 | Noise magnitude | +15% per cell (radius 2) |
 | False trail magnitude | +20% per cell |
 | Diffusion rate | 10% per tick |
-| Phase timers | 20s for Recon/Manipulation/Events, 60s for Objective, 30s for Collapse |
+| Phase timers | 20s for Recon/Manipulation/Events, 90s for Objective, 30s for Collapse |
 | Ghost start | Random cell |
 | Seeker start | (9, 9) |
 

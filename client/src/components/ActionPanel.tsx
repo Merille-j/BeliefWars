@@ -126,14 +126,14 @@ export const ActionPanel: React.FC<ActionPanelProps> = ({ onAction }) => {
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between mb-1">
             <p className="text-green-400 text-xs font-bold uppercase tracking-wider">Movement</p>
-            <span className="text-green-400 text-xs font-bold">{ghostAP} / 8 AP</span>
+            <span className="text-green-400 text-xs font-bold">{ghostAP} / 10 AP</span>
           </div>
 
           {/* AP bar */}
           <div className="w-full bg-gray-700 rounded-full h-2 mb-1">
             <div
               className="bg-green-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${(ghostAP / 8) * 100}%` }}
+              style={{ width: `${(ghostAP / 10) * 100}%` }}
             />
           </div>
 

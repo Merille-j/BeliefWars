@@ -29,14 +29,14 @@ const PHASE_DESCRIPTIONS: Record<GamePhase, string> = {
 
 /**
  * Per-phase duration in seconds.
- * Ghost OBJECTIVE phase has 60 seconds; COLLAPSE still gives the Seeker 30 seconds.
+ * Ghost OBJECTIVE phase has 90 seconds; COLLAPSE still gives the Seeker 30 seconds.
  */
-export const PHASE_DURATIONS: Record<GamePhase, number> = {
-  [GamePhase.RECON]:         20,
-  [GamePhase.MANIPULATION]:  20,
-  [GamePhase.OBJECTIVE]:     60,
-  [GamePhase.AND_OR_EVENTS]: 20,
-  [GamePhase.COLLAPSE]:      30,
+ export const PHASE_DURATIONS: Record<GamePhase, number> = {
+   [GamePhase.RECON]:         20,
+   [GamePhase.MANIPULATION]:  20,
+   [GamePhase.OBJECTIVE]:     90,
+   [GamePhase.AND_OR_EVENTS]: 20,
+   [GamePhase.COLLAPSE]:      30,
 };
 
 /**
