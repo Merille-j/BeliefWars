@@ -130,8 +130,8 @@ The round ends early if:
 
 If neither happens after both Collapses:
 
-- Ghost completed ≥2 objectives → **Ghost wins**
-- Ghost completed <2 objectives → **Seeker wins** (Ghost failed the mission)
+- Ghost completed ≥3 objectives → **Ghost wins**
+- Ghost completed <3 objectives → **Seeker wins** (Ghost failed the mission)
 
 ### Match Structure
 
@@ -148,7 +148,7 @@ After the match ends, the Result Screen shows a full **move-by-move replay** of 
 | Parameter | Value |
 | --- | --- |
 | Grid size | **10×10** |
-| Objectives per round | **5** (Ghost needs 2 to win) |
+| Objectives per round | **5** (Ghost needs 3 to win) |
 | Cycles per round | **2** |
 | Ghost AP per phase | **8 / 10** |
 | Seeker AP per Collapse | **10** |
