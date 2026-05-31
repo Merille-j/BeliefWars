@@ -51,7 +51,7 @@ export class AIOpponent {
     private grid: MapGridSystem,
     private beliefEngine: BeliefStateEngine,
     private entityManager: EntityManager,
-    private _phaseController: PhaseController,
+    _phaseController: PhaseController, // reserved for future use; not read internally
     private ghostActions: GhostActions,
     private seekerActions: SeekerActions,
     private _roundNumber: number = 1,
@@ -96,8 +96,8 @@ export class AIOpponent {
       if (phase === GamePhase.RECON) {
         this.ghostMoveHistory = [];
         this.mcts.reset();
-        // Recalculate pattern learning status at the start of each round
-        this.updatePatternLearningStatus();
+        // Pattern learning status is updated by updateRound() at the start of each round.
+        // No need to recalculate here.
       }
     }
     this.phaseTickCount++;
@@ -594,6 +594,8 @@ export class AIOpponent {
     this._roundNumber = roundNumber;
     this.mcts.reset();
     this.ghostMoveHistory = [];
+    // Recalculate pattern learning status for the new round number
+    this.updatePatternLearningStatus();
     // Keep memory — it accumulates across rounds
   }
 }

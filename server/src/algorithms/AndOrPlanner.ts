@@ -234,11 +234,11 @@ export class AndOrPlanner {
   /**
    * Convert internal AndOrNode tree to ContingencyPlan branches.
    */
-  private nodeTosBranch(node: AndOrNode): AndOrBranch {
+  private nodeToBranch(node: AndOrNode): AndOrBranch {
     return {
       condition: node.condition ?? `${node.type} node`,
       action: node.action,
-      children: node.children.map(child => this.nodeTosBranch(child)),
+      children: node.children.map(child => this.nodeToBranch(child)),
     };
   }
 }

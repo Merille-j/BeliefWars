@@ -133,7 +133,7 @@ const RoundCard: React.FC<{ entry: RoundHistoryEntry; defaultOpen?: boolean }> =
                     </div>
                     {phaseMoves.map((move, i) => (
                       <MoveRow
-                        key={i}
+                        key={`${phase}-${move.actor}-${move.actionType}-${i}`}
                         move={move}
                         isHuman={move.actor === 'human'}
                       />

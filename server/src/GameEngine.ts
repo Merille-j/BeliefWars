@@ -60,10 +60,16 @@ export class GameEngine {
   private roleAssign: RoleAssign;
 
   // Action systems
-  private ghostActions!: GhostActions;
+  private ghostActions: GhostActions | null = null;
   private seekerActions: SeekerActions;
   private eventSystem: EventSystem;
   private aiOpponent!: AIOpponent;
+
+  /** Non-null accessor — only valid after initialize(). */
+  private get ga(): GhostActions {
+    if (!this.ghostActions) throw new Error('[GameEngine] ghostActions accessed before initialize()');
+    return this.ghostActions;
+  }
 
   // Algorithms
   private mcts: MCTS;
@@ -190,7 +196,7 @@ export class GameEngine {
         this.gameStateStore.update({ alertLevel: 100 });
         if (!this.seekerFoundGhost) {
           this.seekerFoundGhost = true;
-          const objCompleted = this.ghostActions.getObjectives().filter(o => o.completed).length;
+          const objCompleted = this.ga.getObjectives().filter(o => o.completed).length;
           this.matchController.endRound(GameRole.SEEKER, 'ghost_locked', objCompleted);
           this.startNewRound();
         }
@@ -284,7 +290,7 @@ export class GameEngine {
         case 'THROW_DECOY': {
           if (humanRole !== GameRole.GHOST) return { success: false, message: 'Not Ghost role' };
           if (typeof action.x !== 'number' || typeof action.y !== 'number') return { success: false, message: 'Invalid coordinates' };
-          const ok = this.ghostActions.throwDecoy(action.x, action.y);
+          const ok = this.ga.throwDecoy(action.x, action.y);
           if (ok) {
             this.patternMemory.observeHumanAction('THROW_DECOY', action.x, action.y, this.phaseController.currentPhase, this.roleAndRoundStore.currentRound);
             this.recordMove('human', GameRole.GHOST, 'THROW_DECOY', action.x, action.y, `Decoy at (${action.x},${action.y})`);
@@ -296,7 +302,7 @@ export class GameEngine {
           if (humanRole !== GameRole.GHOST) return { success: false, message: 'Not Ghost role' };
           if (typeof action.x !== 'number' || typeof action.y !== 'number') return { success: false, message: 'Invalid coordinates' };
           const radius = typeof action.radius === 'number' ? action.radius : 2;
-          const ok = this.ghostActions.makeNoise(action.x, action.y, radius);
+          const ok = this.ga.makeNoise(action.x, action.y, radius);
           if (ok) {
             this.patternMemory.observeHumanAction('MAKE_NOISE', action.x, action.y, this.phaseController.currentPhase, this.roleAndRoundStore.currentRound);
             this.recordMove('human', GameRole.GHOST, 'MAKE_NOISE', action.x, action.y, `Noise at (${action.x},${action.y}) r=${radius}`);
@@ -307,7 +313,7 @@ export class GameEngine {
         case 'LAY_FALSE_TRAIL': {
           if (humanRole !== GameRole.GHOST) return { success: false, message: 'Not Ghost role' };
           if (!Array.isArray(action.cells) || action.cells.length === 0) return { success: false, message: 'Invalid trail cells' };
-          const ok = this.ghostActions.layFalseTrail(action.cells);
+          const ok = this.ga.layFalseTrail(action.cells);
           if (ok) {
             const mid = action.cells[Math.floor(action.cells.length / 2)];
             this.patternMemory.observeHumanAction('LAY_FALSE_TRAIL', mid.x, mid.y, this.phaseController.currentPhase, this.roleAndRoundStore.currentRound);
@@ -319,7 +325,7 @@ export class GameEngine {
         case 'MOVE': {
           if (humanRole !== GameRole.GHOST) return { success: false, message: 'Not Ghost role' };
           if (typeof action.x !== 'number' || typeof action.y !== 'number') return { success: false, message: 'Invalid coordinates' };
-          const ok = this.ghostActions.move(action.x, action.y);
+          const ok = this.ga.move(action.x, action.y);
           if (ok) {
             this.patternMemory.observeHumanAction('MOVE', action.x, action.y, this.phaseController.currentPhase, this.roleAndRoundStore.currentRound);
             this.recordMove('human', GameRole.GHOST, 'MOVE', action.x, action.y, `→ (${action.x},${action.y})`);
@@ -330,10 +336,10 @@ export class GameEngine {
         case 'COMPLETE_OBJECTIVE': {
           if (humanRole !== GameRole.GHOST) return { success: false, message: 'Not Ghost role' };
           if (typeof action.objectiveId !== 'string' || !action.objectiveId) return { success: false, message: 'Invalid objectiveId' };
-          const objectives = this.ghostActions.getObjectives();
+          const objectives = this.ga.getObjectives();
           const objIndex = objectives.findIndex(o => o.id === action.objectiveId);
           const obj = objectives[objIndex];
-          const ok = this.ghostActions.completeObjective(action.objectiveId);
+          const ok = this.ga.completeObjective(action.objectiveId);
           if (ok) {
             this.patternMemory.observeHumanAction('COMPLETE_OBJECTIVE', undefined, undefined, this.phaseController.currentPhase, this.roleAndRoundStore.currentRound, objIndex >= 0 ? objIndex : undefined);
             this.recordMove('human', GameRole.GHOST, 'COMPLETE_OBJECTIVE', obj?.position.x, obj?.position.y, `Completed ${obj?.label ?? 'objective'}`);
@@ -412,7 +418,7 @@ export class GameEngine {
       if (isRoundEndingCollapse) {
         // Final cycle complete — evaluate Ghost win condition:
         // Ghost wins ONLY if it survived AND completed at least 3 objectives.
-        const allObjectives = this.ghostActions.getObjectives();
+        const allObjectives = this.ga.getObjectives();
         const objCompleted = allObjectives.filter(o => o.completed).length;
         const ghostWins = objCompleted >= 3;
 
@@ -506,7 +512,7 @@ export class GameEngine {
       roundNumber: this.roleAndRoundStore.currentRound,
     });
 
-    this.ghostActions.setObjectives(objectives);
+    this.ga.setObjectives(objectives);
     this.entityManager.reset(this.randomPosition(), { x: 9, y: 9 });
 
     // Update AI role and round number
@@ -516,6 +522,7 @@ export class GameEngine {
 
   /**
    * Serialize the complete game state for the client.
+   * Safe to call before initialize() — returns zeroed state in that case.
    */
   getFullState(): SerializedGameState {
     // Use cached recommendations from tick() — avoids running MCTS twice per cycle
@@ -524,7 +531,9 @@ export class GameEngine {
     return {
       gameState: this.gameStateStore.get(),
       grid: this.gridStore.serialize(),
-      entities: this.entityManager.serialize(),
+      // ghostActions is only assigned after initialize(); guard to avoid a crash
+      // if getFullState() is called before the first game starts.
+      entities: this.isInitialized ? this.entityManager.serialize() : [],
       ghostWins: this.roleAndRoundStore.ghostWins,
       seekerWins: this.roleAndRoundStore.seekerWins,
       humanWins: this.roleAndRoundStore.humanWins,

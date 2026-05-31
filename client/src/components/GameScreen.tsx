@@ -43,15 +43,15 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onAction }) => {
       setPendingAction('move');
     } else if (phase !== GamePhase.OBJECTIVE) {
       // Clear move mode when leaving OBJECTIVE phase; leave other modes alone
-      const current = useGameStore.getState().pendingAction;
-      if (current === 'move') setPendingAction('none');
+      if (useGameStore.getState().pendingAction === 'move') {
+        setPendingAction('none');
+      }
     }
     // Clear A* path when leaving OBJECTIVE phase
     if (phase !== GamePhase.OBJECTIVE) {
       useGameStore.getState().setSuggestedPath(null);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, humanRole]);
+  }, [phase, humanRole, setPendingAction]);
 
   const handleCellClick = useCallback(
     (x: number, y: number) => {

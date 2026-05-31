@@ -147,7 +147,7 @@ export const EventContingencyPanel: React.FC<EventContingencyPanelProps> = ({
 /**
  * Format an action object into a human-readable string.
  */
-function formatAction(action: any): string {
+function formatAction(action: { type: string; x?: number; y?: number; radius?: number } | null | undefined): string {
   if (!action) return 'No action';
 
   switch (action.type) {
