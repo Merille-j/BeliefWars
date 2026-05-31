@@ -15,12 +15,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-      - name: Install root deps
+      - name: Install root deps (workspaces)
         run: npm ci
-      - name: Install server deps
-        run: npm --prefix server ci
-      - name: Install client deps
-        run: npm --prefix client ci
       - name: Build server
         run: npm --prefix server run build
       - name: Build client
