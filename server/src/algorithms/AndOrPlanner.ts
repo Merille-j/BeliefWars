@@ -1,4 +1,4 @@
-import { ContingencyPlan, AndOrBranch, AndOrNode, NondeterministicEvent, Action } from '../types/game.types';
+import { ContingencyPlan, AndOrBranch, NondeterministicEvent, Action } from '../types/game.types';
 import { EventType } from '../types/game.types';
 import { eventBus } from '../core/EventBus';
 import { MapGridSystem } from '../core/MapGridSystem';
@@ -193,24 +193,25 @@ export class AndOrPlanner {
     // Ghost: sensors disrupted, good time to move toward objectives
     const ghostBranches: AndOrBranch[] = [
       {
-        condition: 'Sensors disrupted — Ghost can move freely',
+        condition: 'Sensors disrupted — Ghost can move freely toward objectives',
         action: {
           type: 'MOVE' as const,
           playerId: 'human',
-          x: region.x,
-          y: region.y,
+          // Move away from the disrupted region centre, not into it
+          x: Math.min(9, Math.max(0, region.x > 5 ? region.x - 3 : region.x + 3)),
+          y: Math.min(9, Math.max(0, region.y > 5 ? region.y - 3 : region.y + 3)),
         } as Action,
         children: [],
       },
       {
-        condition: 'Use disruption to lay false trail',
+        condition: 'Use disruption to lay false trail toward disrupted zone',
         action: {
           type: 'LAY_FALSE_TRAIL' as const,
           playerId: 'human',
           cells: [
-            { x: region.x - 1, y: region.y },
-            { x: region.x, y: region.y },
-            { x: region.x + 1, y: region.y },
+            { x: Math.min(9, Math.max(0, region.x - 1)), y: region.y },
+            { x: region.x,                               y: region.y },
+            { x: Math.min(9, Math.max(0, region.x + 1)), y: region.y },
           ],
         } as Action,
         children: [],
@@ -231,14 +232,4 @@ export class AndOrPlanner {
     ];
   }
 
-  /**
-   * Convert internal AndOrNode tree to ContingencyPlan branches.
-   */
-  private nodeToBranch(node: AndOrNode): AndOrBranch {
-    return {
-      condition: node.condition ?? `${node.type} node`,
-      action: node.action,
-      children: node.children.map(child => this.nodeToBranch(child)),
-    };
-  }
 }

@@ -153,55 +153,8 @@ export const HeatmapCanvas: React.FC<HeatmapCanvasProps> = ({ onCellClick }) => 
       }
     }
 
-    // 5.5 — A* suggested path overlay (drawn before move-mode overlay)
-    // Show whenever a path exists in OBJECTIVE phase, regardless of pendingAction state
-    const isObjectivePhase = humanRole === GameRole.GHOST && phase === GamePhase.OBJECTIVE;
-    if (suggestedPath && suggestedPath.length > 0 && isObjectivePhase) {
-      const ghostEntity = entities.find(e => e.role === GameRole.GHOST);
-      const gx = ghostEntity?.position.x ?? -1;
-      const gy = ghostEntity?.position.y ?? -1;
-
-      // Draw path line connecting Ghost → each step
-      ctx.strokeStyle = 'rgba(0,255,136,0.7)';
-      ctx.lineWidth = 3;
-      ctx.setLineDash([5, 3]);
-      ctx.beginPath();
-      const startC = cellCenter(gx, gy, CELL_SIZE);
-      ctx.moveTo(startC.px, startC.py);
-      for (const step of suggestedPath) {
-        const c = cellCenter(step.x, step.y, CELL_SIZE);
-        ctx.lineTo(c.px, c.py);
-      }
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // Highlight each path cell with a faint green tint + step number
-      suggestedPath.forEach((step, i) => {
-        const isNext = i === 0; // first step is the immediate next move
-        ctx.fillStyle = isNext ? 'rgba(0,255,136,0.22)' : 'rgba(0,255,136,0.10)';
-        ctx.fillRect(step.x * CELL_SIZE, step.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
-
-        // Step number
-        const { px, py } = cellCenter(step.x, step.y, CELL_SIZE);
-        ctx.fillStyle = isNext ? 'rgba(0,255,136,0.9)' : 'rgba(0,255,136,0.5)';
-        ctx.font = `bold ${CELL_SIZE * 0.3}px monospace`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(String(i + 1), px, py + CELL_SIZE * 0.22);
-      });
-
-      // Goal marker (last cell in path)
-      const goal = suggestedPath[suggestedPath.length - 1];
-      const { px: gpx, py: gpy } = cellCenter(goal.x, goal.y, CELL_SIZE);
-      ctx.strokeStyle = 'rgba(0,255,136,1.0)';
-      ctx.lineWidth = 2.5;
-      ctx.strokeRect(goal.x * CELL_SIZE + 2, goal.y * CELL_SIZE + 2, CELL_SIZE - 4, CELL_SIZE - 4);
-      ctx.fillStyle = 'rgba(0,255,136,0.9)';
-      ctx.font = `bold ${CELL_SIZE * 0.38}px monospace`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('★', gpx, gpy - CELL_SIZE * 0.18);
-    }
+    // 5.5 — A* suggested path overlay — intentionally removed from here,
+    // drawn AFTER the move-mode overlay at step 7.5 so it isn't dimmed out.
 
     // 6. Manipulation hover previews
     if (isManipulation && hoverCell) {
@@ -334,6 +287,52 @@ export const HeatmapCanvas: React.FC<HeatmapCanvasProps> = ({ onCellClick }) => 
         ctx.textBaseline = 'middle';
         ctx.fillText('G', px, py);
       }
+    }
+
+    // 7.5 — A* suggested path overlay — drawn AFTER move-mode dimming so it's visible.
+    if (suggestedPath && suggestedPath.length > 0 && phase === GamePhase.OBJECTIVE) {
+      const ghostEntity = entities.find(e => e.role === GameRole.GHOST);
+      const gx = ghostEntity?.position.x ?? -1;
+      const gy = ghostEntity?.position.y ?? -1;
+
+      // Draw path line from Ghost → each step
+      ctx.strokeStyle = 'rgba(0,255,136,0.85)';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([5, 3]);
+      ctx.beginPath();
+      const startC = cellCenter(gx, gy, CELL_SIZE);
+      ctx.moveTo(startC.px, startC.py);
+      for (const step of suggestedPath) {
+        const c = cellCenter(step.x, step.y, CELL_SIZE);
+        ctx.lineTo(c.px, c.py);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Highlight each path cell + step number
+      suggestedPath.forEach((step, i) => {
+        const isNext = i === 0;
+        ctx.fillStyle = isNext ? 'rgba(0,255,136,0.35)' : 'rgba(0,255,136,0.18)';
+        ctx.fillRect(step.x * CELL_SIZE, step.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+        const { px, py } = cellCenter(step.x, step.y, CELL_SIZE);
+        ctx.fillStyle = isNext ? 'rgba(0,255,136,1.0)' : 'rgba(0,255,136,0.7)';
+        ctx.font = `bold ${CELL_SIZE * 0.32}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(i + 1), px, py + CELL_SIZE * 0.22);
+      });
+
+      // Goal marker (last cell)
+      const goal = suggestedPath[suggestedPath.length - 1];
+      const { px: gpx, py: gpy } = cellCenter(goal.x, goal.y, CELL_SIZE);
+      ctx.strokeStyle = 'rgba(0,255,136,1.0)';
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(goal.x * CELL_SIZE + 2, goal.y * CELL_SIZE + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+      ctx.fillStyle = 'rgba(0,255,136,1.0)';
+      ctx.font = `bold ${CELL_SIZE * 0.4}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('★', gpx, gpy - CELL_SIZE * 0.18);
     }
 
     // 8. Entities (always on top)

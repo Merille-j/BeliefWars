@@ -113,7 +113,7 @@ export class EntityManager {
 
     if (ghost) {
       ghost.position = { ...ghostStart };
-      ghost.ap = 8;
+      ghost.ap = 8;  // starts at RECON → MANIPULATION AP
       ghost.statusEffects = [];
     }
 

@@ -242,7 +242,7 @@ export class GameEngine {
     }
 
     // Run AI turn
-    this.aiOpponent.takeTurn(phase);
+    this.aiOpponent.takeTurn(phase, this.phaseController.cyclesCompleted);
 
     // Check win conditions (AP exhaustion)
     this.checkWinConditions();
@@ -433,7 +433,7 @@ export class GameEngine {
       }
       // Cycle 1 done — start cycle 2: diffuse belief and reset AP for BOTH roles
       this.beliefEngine.diffuse();
-      this.entityManager.resetAP(GameRole.GHOST, 8);
+      this.entityManager.resetAP(GameRole.GHOST, 8);  // Manipulation AP for cycle 2
       this.entityManager.resetAP(GameRole.SEEKER, 10);
       return;
     }
@@ -448,7 +448,7 @@ export class GameEngine {
       this.entityManager.resetAP(GameRole.GHOST, 8);
     }
     if (newPhase === GamePhase.OBJECTIVE) {
-      this.entityManager.resetAP(GameRole.GHOST, 10);
+      this.entityManager.resetAP(GameRole.GHOST, 20);
     }
 
     // Reset Seeker AP at the start of COLLAPSE phase

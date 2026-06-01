@@ -19,8 +19,8 @@ class MCTSNode {
   get ucb1(): number {
     if (this.visits === 0) return Infinity;
     const exploitation = this.value / this.visits;
-    // Exploration constant tuned higher (2.5) to encourage trying uncertain actions
-    const exploration = Math.sqrt(2.5 * Math.log(this.parent?.visits ?? 1) / this.visits);
+    const parentVisits = Math.max(1, this.parent?.visits ?? 1);
+    const exploration = Math.sqrt(2.5 * Math.log(parentVisits) / this.visits);
     return exploitation + exploration;
   }
 
@@ -126,6 +126,10 @@ export class MCTS {
         node.children.push(child);
         return child;
       }
+    }
+    // All actions already expanded — return the best child by UCB1
+    if (node.children.length > 0) {
+      return node.children.reduce((a, b) => (a.ucb1 > b.ucb1 ? a : b));
     }
     return node;
   }

@@ -32,6 +32,8 @@ export class AIOpponent {
   private ghostMoveHistory: Position[] = [];
   private phaseTickCount: number = 0;
   private lastPhase: GamePhase | null = null;
+  /** True when the AI has randomly decided to hold back locks in cycle-1 COLLAPSE. */
+  private _cycle1HoldBack: boolean = false;
 
   // ── Grace Period & Random Activation Configuration ───────────────────────
   /** AI doesn't use pattern learning until this round (e.g., 2 = grace until round 2) */
@@ -89,15 +91,19 @@ export class AIOpponent {
     this.moveRecorder?.(role, actionType, x, y, detail);
   }
 
-  takeTurn(phase: GamePhase): void {
+  takeTurn(phase: GamePhase, cyclesCompleted: number = 0): void {
     if (phase !== this.lastPhase) {
       this.phaseTickCount = 0;
       this.lastPhase = phase;
       if (phase === GamePhase.RECON) {
         this.ghostMoveHistory = [];
         this.mcts.reset();
-        // Pattern learning status is updated by updateRound() at the start of each round.
-        // No need to recalculate here.
+      }
+      // Decide hold-back at the start of each COLLAPSE phase.
+      // In cycle 1 (cyclesCompleted === 0): 40% chance to only scan, no locks.
+      // In cycle 2 (cyclesCompleted === 1): always play optimally.
+      if (phase === GamePhase.COLLAPSE) {
+        this._cycle1HoldBack = cyclesCompleted === 0 && Math.random() < 0.4;
       }
     }
     this.phaseTickCount++;
@@ -411,7 +417,7 @@ export class AIOpponent {
    * cells. This keeps the Ghost's position uncertain and avoids a silent pass.
    */
   private drainRemainingMoveAP(startPos: Position): void {
-    let safetyLimit = 12;
+    let safetyLimit = 22; // Ghost has up to 20 AP in OBJECTIVE phase
     while (this.ghostActions.canMove() && safetyLimit-- > 0) {
       const currentGhost = this.entityManager.getEntity(GameRole.GHOST);
       if (!currentGhost) break;
@@ -451,11 +457,10 @@ export class AIOpponent {
   /**
    * Pattern-aware Seeker collapse.
    *
-   * Uses memory to:
-   * 1. Pre-scan the human Ghost's most-frequented zone at the start of COLLAPSE
-   * 2. Discount probability spikes in the human's known decoy zones
-   * 3. Lock earlier when pattern confidence is high (human is predictable)
-   * 4. Bias MCTS toward cells the human Ghost has visited recently
+   * Cycle-1 behaviour: there is a 40% chance the AI deliberately holds back
+   * (only scans, no locks) in cycle 1, giving the Ghost a chance to survive
+   * to cycle 2. This makes the game feel fairer and less deterministic.
+   * In cycle 2 the AI always plays optimally.
    */
   private aiSeekerCollapse(): void {
     const seeker = this.entityManager.getEntity(GameRole.SEEKER);
@@ -463,11 +468,16 @@ export class AIOpponent {
 
     const ghost = this.entityManager.getEntity(GameRole.GHOST);
     const ghostPos = ghost?.position;
-    
+
     // Only use pattern confidence if pattern learning is active this round
-    const confidence = this.patternLearningActive 
-      ? this.memory.getConfidence() 
+    const confidence = this.patternLearningActive
+      ? this.memory.getConfidence()
       : 0;
+
+    // ── Cycle-1 hold-back: 40% chance AI only scans (no locks) in cycle 1 ──
+    // phaseTickCount resets each phase; we use a per-collapse flag instead.
+    // We track this via a simple instance flag reset at phase start.
+    const holdBackLocks = this._cycle1HoldBack;
 
     // ── Pattern-based pre-scan on first tick of COLLAPSE ──────────────────
     if (this.phaseTickCount === 1 && confidence > 0.35 && this.seekerActions.canScan()) {
@@ -484,19 +494,16 @@ export class AIOpponent {
     if (confidence > 0.4) {
       const frequentCells = this.memory.getFrequentGhostCells(5);
       for (const fc of frequentCells) {
-        // Artificially spike the belief at frequently-visited cells
-        // Weight proportional to visit frequency and confidence
         const boost = fc.weight * 0.04 * confidence;
         this.beliefEngine.spike(fc.x, fc.y, boost);
       }
     }
 
-    // ── Discount decoy zones — reduce probability in the human's decoy zone ─
+    // ── Discount decoy zones ───────────────────────────────────────────────
     if (confidence > 0.5) {
       const decoyZone = this.memory.getPredictedDecoyZone();
       if (decoyZone) {
         const centre = HumanPatternMemory.quadrantCentre(decoyZone);
-        // Reduce probability in the decoy zone (it's probably fake)
         const cells = this.grid.getCellsInRadius(centre.x, centre.y, 4);
         for (const cell of cells) {
           const current = this.grid.getCell(cell.x, cell.y);
@@ -510,10 +517,9 @@ export class AIOpponent {
       }
     }
 
-    // ── High-confidence direct lock ────────────────────────────────────────
-    // Lower the lock threshold when we have good pattern data
+    // ── High-confidence direct lock (skipped in hold-back mode) ───────────
     const lockThreshold = confidence > 0.6 ? 0.10 : 0.15;
-    if (this.seekerActions.canLock()) {
+    if (!holdBackLocks && this.seekerActions.canLock()) {
       const hottest = this.beliefEngine.getHighestProbabilityCell();
       if (hottest.probability > lockThreshold) {
         const ghostPosition = ghostPos ?? { x: -1, y: -1 };
@@ -537,7 +543,7 @@ export class AIOpponent {
 
       const action = rec.action;
 
-      if (action.type === 'LOCK' && this.seekerActions.canLock()) {
+      if (action.type === 'LOCK' && !holdBackLocks && this.seekerActions.canLock()) {
         const ghostPosition = ghostPos ?? { x: -1, y: -1 };
         const hit = this.seekerActions.lock(action.x, action.y, ghostPosition);
         this.mcts.recordScan(action.x, action.y);
@@ -549,18 +555,20 @@ export class AIOpponent {
         this.mcts.recordScan(action.x, action.y);
         this.aiRecord(GameRole.SEEKER, 'SCAN', action.x, action.y, `AI scan (${action.x},${action.y})`);
 
-        // After scanning, check if we should lock the now-hottest cell
-        const afterScanSeeker = this.entityManager.getEntity(GameRole.SEEKER);
-        const postScanThreshold = confidence > 0.5 ? 0.14 : 0.18;
-        if (afterScanSeeker && afterScanSeeker.ap >= 4) {
-          const newHottest = this.beliefEngine.getHighestProbabilityCell();
-          if (newHottest.probability > postScanThreshold && this.seekerActions.canLock()) {
-            const ghostPosition = ghostPos ?? { x: -1, y: -1 };
-            const hit = this.seekerActions.lock(newHottest.x, newHottest.y, ghostPosition);
-            this.mcts.recordScan(newHottest.x, newHottest.y);
-            this.aiRecord(GameRole.SEEKER, 'LOCK', newHottest.x, newHottest.y,
-              hit ? `🔒 AI HIT (${newHottest.x},${newHottest.y})` : `AI miss (${newHottest.x},${newHottest.y})`);
-            if (hit) return;
+        // After scanning, lock only if not in hold-back mode
+        if (!holdBackLocks) {
+          const afterScanSeeker = this.entityManager.getEntity(GameRole.SEEKER);
+          const postScanThreshold = confidence > 0.5 ? 0.14 : 0.18;
+          if (afterScanSeeker && afterScanSeeker.ap >= 4) {
+            const newHottest = this.beliefEngine.getHighestProbabilityCell();
+            if (newHottest.probability > postScanThreshold && this.seekerActions.canLock()) {
+              const ghostPosition = ghostPos ?? { x: -1, y: -1 };
+              const hit = this.seekerActions.lock(newHottest.x, newHottest.y, ghostPosition);
+              this.mcts.recordScan(newHottest.x, newHottest.y);
+              this.aiRecord(GameRole.SEEKER, 'LOCK', newHottest.x, newHottest.y,
+                hit ? `🔒 AI HIT (${newHottest.x},${newHottest.y})` : `AI miss (${newHottest.x},${newHottest.y})`);
+              if (hit) return;
+            }
           }
         }
       }

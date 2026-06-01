@@ -95,14 +95,14 @@ belief-wars/
 
 ## Gameplay
 
-### Ghost Role (8 AP Manipulation, 10 AP Objective)
+### Ghost Role (8 AP Manipulation, 20 AP Objective)
 
 - **Recon Phase**: Observe the heatmap — bright zones are where the Seeker suspects you
 - **Manipulation Phase** (8 AP):
   - 🎯 **Throw Decoy** (2 AP) — spike +30% probability at one cell
   - 📢 **Make Noise** (2 AP) — spike +15% across a 5×5 area
   - 👣 **Lay False Trail** (3 AP) — spike +20% along a 3-cell path
-- **Objective Phase** (10 AP): Move one step at a time (↑↓←→ only, 1 AP per step). Complete **3 of 5 objectives** to win the round.
+- **Objective Phase** (20 AP): Move one step at a time (↑↓←→ only, 1 AP per step). Complete **3 of 5 objectives** to win the round.
 - Ghost spawns at a **random position** each round.
 
 ### Seeker Role (10 AP per Collapse)
@@ -150,7 +150,7 @@ After the match ends, the Result Screen shows a full **move-by-move replay** of 
 | Grid size | **10×10** |
 | Objectives per round | **5** (Ghost needs 3 to win) |
 | Cycles per round | **2** |
-| Ghost AP per phase | **8 / 10** |
+| Ghost AP per phase | **8 / 20** |
 | Seeker AP per Collapse | **10** |
 | Scan cost | 2 AP |
 | Lock cost | 4 AP |

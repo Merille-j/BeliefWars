@@ -170,12 +170,15 @@ export function useSocket() {
         body: JSON.stringify({ goalX, goalY }),
       });
       const data = await res.json();
-      if (data.success && data.path) {
+      console.log('[requestPath] response:', data);
+      if (data.success && Array.isArray(data.path) && data.path.length > 0) {
         useGameStore.getState().setSuggestedPath(data.path);
       } else {
-        useGameStore.getState().setSuggestedPath(null);
+        // path is null (no path found) or empty (already at goal)
+        useGameStore.getState().setSuggestedPath(data.path ?? []);
       }
-    } catch {
+    } catch (err) {
+      console.error('[requestPath] fetch error:', err);
       useGameStore.getState().setSuggestedPath(null);
     }
   }, []);
