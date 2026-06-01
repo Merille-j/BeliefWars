@@ -94,7 +94,7 @@ export interface RoundHistoryEntry {
   humanWon: boolean;
   humanRole: GameRole;
   aiRole: GameRole;
-  winCondition: 'objectives_completed' | 'ghost_locked' | 'ghost_survived';
+  winCondition: 'objectives_completed' | 'all_objectives_completed' | 'ghost_locked' | 'ghost_survived';
   objectivesCompleted: number;
   moves: MoveRecord[];
 }

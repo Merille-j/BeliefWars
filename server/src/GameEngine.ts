@@ -420,7 +420,8 @@ export class GameEngine {
         // Ghost wins ONLY if it survived AND completed at least 3 objectives.
         const allObjectives = this.ga.getObjectives();
         const objCompleted = allObjectives.filter(o => o.completed).length;
-        const ghostWins = objCompleted >= 3;
+        const allCompleted = objCompleted === allObjectives.length;
+        const ghostWins = objCompleted >= 3 || allCompleted;
 
         if (ghostWins) {
           this.matchController.endRound(GameRole.GHOST, 'objectives_completed', objCompleted);

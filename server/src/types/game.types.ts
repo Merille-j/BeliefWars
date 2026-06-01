@@ -256,7 +256,7 @@ export interface RoundHistoryEntry {
    * - 'ghost_locked'         — Seeker locked Ghost during Collapse → Seeker wins
    * - 'ghost_survived'       — Ghost survived but completed <3 objectives → Seeker wins
    */
-  winCondition: 'objectives_completed' | 'ghost_locked' | 'ghost_survived';
+  winCondition: 'objectives_completed' | 'all_objectives_completed' | 'ghost_locked' | 'ghost_survived';
   objectivesCompleted: number;
   moves: MoveRecord[];
 }
