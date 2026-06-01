@@ -154,7 +154,9 @@ export const HeatmapCanvas: React.FC<HeatmapCanvasProps> = ({ onCellClick }) => 
     }
 
     // 5.5 — A* suggested path overlay (drawn before move-mode overlay)
-    if (suggestedPath && suggestedPath.length > 0 && isGhostMoving) {
+    // Show whenever a path exists in OBJECTIVE phase, regardless of pendingAction state
+    const isObjectivePhase = humanRole === GameRole.GHOST && phase === GamePhase.OBJECTIVE;
+    if (suggestedPath && suggestedPath.length > 0 && isObjectivePhase) {
       const ghostEntity = entities.find(e => e.role === GameRole.GHOST);
       const gx = ghostEntity?.position.x ?? -1;
       const gy = ghostEntity?.position.y ?? -1;

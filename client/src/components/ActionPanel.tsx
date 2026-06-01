@@ -1,11 +1,12 @@
 import React from 'react';
 import { useGameStore } from '../store/gameStore';
 import { selectHumanRole, selectSeekerAP, selectGhostAP } from '../store/gameStore';
-import { useSocket } from '../hooks/useSocket';
 import { GameRole, GamePhase, ClientAction, GameState, Entity } from '../types/client.types';
 
 interface ActionPanelProps {
   onAction: (action: ClientAction) => void;
+  requestPath: (goalX: number, goalY: number) => void;
+  clearPath: () => void;
 }
 
 /**
@@ -14,7 +15,7 @@ interface ActionPanelProps {
  * Shows Seeker actions in COLLAPSE phase.
  * Displays MCTS recommendations for Seeker.
  */
-export const ActionPanel: React.FC<ActionPanelProps> = ({ onAction }) => {
+export const ActionPanel: React.FC<ActionPanelProps> = ({ onAction, requestPath, clearPath }) => {
   const {
     gameState,
     humanPlayerId,
@@ -29,7 +30,6 @@ export const ActionPanel: React.FC<ActionPanelProps> = ({ onAction }) => {
   const humanRole = useGameStore(selectHumanRole);
   const seekerAP = useGameStore(selectSeekerAP);
   const ghostAP = useGameStore(selectGhostAP);
-  const { requestPath, clearPath } = useSocket();
 
   const phase = gameState?.phase ?? GamePhase.RECON;
 

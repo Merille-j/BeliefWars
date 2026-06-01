@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { selectHumanRole } from '../store/gameStore';
+import { useSocket } from '../hooks/useSocket';
 import { HeatmapCanvas } from './HeatmapCanvas';
 import { GameHUD } from './GameHUD';
 import { ActionPanel } from './ActionPanel';
@@ -34,6 +35,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onAction }) => {
     alert,
   } = useGameStore();
   const humanRole = useGameStore(selectHumanRole);
+  const { requestPath, clearPath } = useSocket();
 
   const phase = gameState?.phase ?? GamePhase.RECON;
 
@@ -189,7 +191,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onAction }) => {
             plan={alert?.payload?.plan}
             affectedRegion={activeEvent?.affectedRegion ?? { x: 0, y: 0, radius: 0 }}
           />
-          <ActionPanel onAction={onAction} />
+          <ActionPanel onAction={onAction} requestPath={requestPath} clearPath={clearPath} />
           <RoundHistory variant="compact" />
           <ActiveEventDisplay />
         </div>
