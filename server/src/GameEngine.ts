@@ -423,12 +423,14 @@ export class GameEngine {
         const allCompleted = objCompleted === allObjectives.length;
         const ghostWins = objCompleted >= 3 || allCompleted;
 
-        if (ghostWins) {
+        if (allCompleted) {
+          this.matchController.endRound(GameRole.GHOST, 'all_objectives_completed', objCompleted);
+        } else if (ghostWins) {
           this.matchController.endRound(GameRole.GHOST, 'objectives_completed', objCompleted);
         } else {
-          // Ghost survived but captured fewer than 3 objectives → Seeker wins
           this.matchController.endRound(GameRole.SEEKER, 'ghost_survived', objCompleted);
         }
+        
         this.startNewRound();
         return;
       }
