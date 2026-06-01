@@ -5,9 +5,10 @@ import { GameRole, GamePhase, MoveRecord, RoundHistoryEntry } from '../types/cli
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const WIN_CONDITION: Record<string, { label: string; icon: string; color: string }> = {
-  objectives_completed: { label: 'Ghost: 3+ objectives + survived', icon: '🎯', color: 'text-green-400' },
-  ghost_locked:         { label: 'Seeker: Ghost locked',            icon: '🔒', color: 'text-red-400'   },
-  ghost_survived:       { label: 'Seeker: Ghost had <3 objectives', icon: '❌', color: 'text-red-400'   },
+  objectives_completed:     { label: 'Ghost: 3+ objectives + survived', icon: '🎯', color: 'text-green-400'  },
+  all_objectives_completed: { label: 'Ghost: ALL objectives + survived', icon: '🏅', color: 'text-yellow-400' },
+  ghost_locked:             { label: 'Seeker: Ghost locked',             icon: '🔒', color: 'text-red-400'   },
+  ghost_survived:           { label: 'Seeker: Ghost had <3 objectives',  icon: '❌', color: 'text-red-400'   },
 };
 
 const PHASE_COLOR: Record<string, string> = {
@@ -133,7 +134,7 @@ const RoundCard: React.FC<{ entry: RoundHistoryEntry; defaultOpen?: boolean }> =
                     </div>
                     {phaseMoves.map((move, i) => (
                       <MoveRow
-                        key={i}
+                        key={`${phase}-${move.actor}-${move.actionType}-${i}`}
                         move={move}
                         isHuman={move.actor === 'human'}
                       />

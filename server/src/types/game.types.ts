@@ -66,7 +66,6 @@ export enum EventType {
   ROLES_ASSIGNED = 'ROLES_ASSIGNED',
 
   // Objective events
-  OBJECTIVES_COMPLETED = 'OBJECTIVES_COMPLETED',
   OBJECTIVE_REACHED = 'OBJECTIVE_REACHED',
 
   // Algorithm events
@@ -91,17 +90,6 @@ export interface GameState {
   alertLevel: number;   // 0–100
   roundNumber: number;
   objectives: Objective[];
-}
-
-export interface RoundResult {
-  roundNumber: number;
-  winner: GameRole;
-  ghostObjectivesCompleted: number;
-}
-
-export interface MatchResult {
-  winner: GameRole;
-  rounds: RoundResult[];
 }
 
 export interface RoundStore {
@@ -268,7 +256,7 @@ export interface RoundHistoryEntry {
    * - 'ghost_locked'         — Seeker locked Ghost during Collapse → Seeker wins
    * - 'ghost_survived'       — Ghost survived but completed <3 objectives → Seeker wins
    */
-  winCondition: 'objectives_completed' | 'ghost_locked' | 'ghost_survived';
+  winCondition: 'objectives_completed' | 'all_objectives_completed' | 'ghost_locked' | 'ghost_survived';
   objectivesCompleted: number;
   moves: MoveRecord[];
 }

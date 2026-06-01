@@ -105,7 +105,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
                 <li>• Completing <span className="text-yellow-400">3 of 5</span> objectives</li>
                 <li>• <span className="text-yellow-400">AND</span> surviving both Collapses</li>
                 <li>• Misleading the Seeker's heatmap</li>
-                <li>• Moving adjacently (↑↓←→), 8 AP/phase</li>
+                <li>• Moving adjacently (↑↓←→), 8 AP in Manipulation, 20 AP in Objective</li>
               </ul>
             </div>
             <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">

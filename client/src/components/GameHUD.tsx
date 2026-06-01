@@ -112,12 +112,12 @@ export const GameHUD: React.FC = () => {
             <>
               <div className="flex justify-between text-xs mb-1">
                 <span className="text-gray-400">Move Points</span>
-                <span className="text-green-400 font-bold">{ghostAP} / 8</span>
+                <span className="text-green-400 font-bold">{ghostAP} / 20</span>
               </div>
               <div className="w-full bg-gray-700 rounded-full h-3">
                 <div
                   className="bg-green-500 h-3 rounded-full transition-all duration-300"
-                  style={{ width: `${(ghostAP / 8) * 100}%` }}
+                  style={{ width: `${(ghostAP / 20) * 100}%` }}
                 />
               </div>
               <div className="mt-1 text-xs text-gray-500">1 AP per adjacent step (↑↓←→)</div>

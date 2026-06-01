@@ -1,11 +1,12 @@
 import React from 'react';
 import { useGameStore } from '../store/gameStore';
 import { selectHumanRole, selectSeekerAP, selectGhostAP } from '../store/gameStore';
-import { useSocket } from '../hooks/useSocket';
 import { GameRole, GamePhase, ClientAction, GameState, Entity } from '../types/client.types';
 
 interface ActionPanelProps {
   onAction: (action: ClientAction) => void;
+  requestPath: (goalX: number, goalY: number) => void;
+  clearPath: () => void;
 }
 
 /**
@@ -14,7 +15,7 @@ interface ActionPanelProps {
  * Shows Seeker actions in COLLAPSE phase.
  * Displays MCTS recommendations for Seeker.
  */
-export const ActionPanel: React.FC<ActionPanelProps> = ({ onAction }) => {
+export const ActionPanel: React.FC<ActionPanelProps> = ({ onAction, requestPath, clearPath }) => {
   const {
     gameState,
     humanPlayerId,
@@ -29,7 +30,6 @@ export const ActionPanel: React.FC<ActionPanelProps> = ({ onAction }) => {
   const humanRole = useGameStore(selectHumanRole);
   const seekerAP = useGameStore(selectSeekerAP);
   const ghostAP = useGameStore(selectGhostAP);
-  const { requestPath, clearPath } = useSocket();
 
   const phase = gameState?.phase ?? GamePhase.RECON;
 
@@ -126,14 +126,14 @@ export const ActionPanel: React.FC<ActionPanelProps> = ({ onAction }) => {
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between mb-1">
             <p className="text-green-400 text-xs font-bold uppercase tracking-wider">Movement</p>
-            <span className="text-green-400 text-xs font-bold">{ghostAP} / 8 AP</span>
+            <span className="text-green-400 text-xs font-bold">{ghostAP} / 20 AP</span>
           </div>
 
           {/* AP bar */}
           <div className="w-full bg-gray-700 rounded-full h-2 mb-1">
             <div
               className="bg-green-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${(ghostAP / 8) * 100}%` }}
+              style={{ width: `${(ghostAP / 20) * 100}%` }}
             />
           </div>
 

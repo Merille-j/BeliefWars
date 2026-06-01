@@ -65,6 +65,17 @@ export interface NondeterministicEvent {
   duration: number;
 }
 
+export interface AndOrBranch {
+  condition: string;
+  action: ClientAction | null;
+  children: AndOrBranch[];
+}
+
+export interface ContingencyPlan {
+  eventType: 'fog' | 'storm' | 'sensor_disruption';
+  branches: AndOrBranch[];
+}
+
 // ─── Round History ────────────────────────────────────────────────────────────
 
 export interface MoveRecord {
@@ -83,7 +94,7 @@ export interface RoundHistoryEntry {
   humanWon: boolean;
   humanRole: GameRole;
   aiRole: GameRole;
-  winCondition: 'objectives_completed' | 'ghost_locked' | 'ghost_survived';
+  winCondition: 'objectives_completed' | 'all_objectives_completed' | 'ghost_locked' | 'ghost_survived';
   objectivesCompleted: number;
   moves: MoveRecord[];
 }
@@ -196,4 +207,8 @@ export interface AlertState {
   active: boolean;
   message: string;
   type: 'collapse' | 'event' | 'info';
+  payload?: {
+    event?: any;
+    plan?: ContingencyPlan;
+  };
 }

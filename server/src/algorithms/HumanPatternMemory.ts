@@ -254,7 +254,7 @@ export class HumanPatternMemory {
    * Returns the average number of moves the human makes per OBJECTIVE phase.
    */
   getAverageMovesPerPhase(): number {
-    if (this.movesPerPhase.length === 0) return 4;
+    if (this.movesPerPhase.length === 0) return 16; // Ghost has 20 AP, realistically uses most of it
     return this.movesPerPhase.reduce((s, m) => s + m, 0) / this.movesPerPhase.length;
   }
 

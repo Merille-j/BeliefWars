@@ -80,8 +80,8 @@ export class BeliefStateEngine {
     const cell = this.grid.getCell(x, y);
     if (!cell) return;
 
-    const newProb = Math.min(1, cell.probability + magnitude);
-    this.grid.setCell(x, y, { probability: newProb });
+    // Add magnitude without clamping — normalize() will redistribute correctly.
+    this.grid.setCell(x, y, { probability: cell.probability + magnitude });
     this.grid.normalize();
 
     eventBus.publish(EventType.BELIEF_UPDATED, { reason: 'spike', x, y, magnitude });
@@ -94,8 +94,8 @@ export class BeliefStateEngine {
     for (const pos of cells) {
       const cell = this.grid.getCell(pos.x, pos.y);
       if (!cell) continue;
-      const newProb = Math.min(1, cell.probability + magnitude);
-      this.grid.setCell(pos.x, pos.y, { probability: newProb });
+      // Add magnitude without clamping — normalize() redistributes correctly.
+      this.grid.setCell(pos.x, pos.y, { probability: cell.probability + magnitude });
     }
     this.grid.normalize();
 
@@ -109,8 +109,8 @@ export class BeliefStateEngine {
   scan(zone: { x: number; y: number; radius: number }, increment: number): void {
     const cells = this.grid.getCellsInRadius(zone.x, zone.y, zone.radius);
     for (const cell of cells) {
-      const newProb = Math.min(1, cell.probability + increment);
-      this.grid.setCell(cell.x, cell.y, { probability: newProb });
+      // Add increment without clamping — normalize() redistributes correctly.
+      this.grid.setCell(cell.x, cell.y, { probability: cell.probability + increment });
     }
     this.grid.normalize();
 

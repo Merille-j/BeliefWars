@@ -1,6 +1,7 @@
 {
   "name": "beliefwars-client",
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -20,6 +21,6 @@
     "postcss": "^8.4.32",
     "tailwindcss": "^3.3.6",
     "typescript": "^5.3.2",
-    "vite": "^5.0.8"
+    "vite": "^6.0.0"
   }
 }

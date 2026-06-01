@@ -51,15 +51,17 @@ const PHASE_META: Record<
 };
 
 const WIN_CONDITION_TEXT: Record<string, string> = {
-  objectives_completed: 'Ghost completed 3+ objectives and survived!',
-  ghost_locked:         "Seeker locked the Ghost's position!",
-  ghost_survived:       'Ghost survived but captured fewer than 3 objectives.',
+  objectives_completed:     'Ghost completed 3+ objectives and survived!',
+  all_objectives_completed: 'Ghost completed ALL objectives and survived!',
+  ghost_locked:             "Seeker locked the Ghost's position!",
+  ghost_survived:           'Ghost survived but captured fewer than 3 objectives.',
 };
 
 const WIN_CONDITION_ICON: Record<string, string> = {
-  objectives_completed: '🎯',
-  ghost_locked:         '🔒',
-  ghost_survived:       '❌',
+  objectives_completed:     '🎯',
+  all_objectives_completed: '🏅',
+  ghost_locked:             '🔒',
+  ghost_survived:           '❌',
 };
 
 // ─── Auto-dismiss durations ───────────────────────────────────────────────────
