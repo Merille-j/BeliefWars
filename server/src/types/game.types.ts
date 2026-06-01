@@ -66,7 +66,6 @@ export enum EventType {
   ROLES_ASSIGNED = 'ROLES_ASSIGNED',
 
   // Objective events
-  OBJECTIVES_COMPLETED = 'OBJECTIVES_COMPLETED',
   OBJECTIVE_REACHED = 'OBJECTIVE_REACHED',
 
   // Algorithm events
@@ -91,17 +90,6 @@ export interface GameState {
   alertLevel: number;   // 0–100
   roundNumber: number;
   objectives: Objective[];
-}
-
-export interface RoundResult {
-  roundNumber: number;
-  winner: GameRole;
-  ghostObjectivesCompleted: number;
-}
-
-export interface MatchResult {
-  winner: GameRole;
-  rounds: RoundResult[];
 }
 
 export interface RoundStore {

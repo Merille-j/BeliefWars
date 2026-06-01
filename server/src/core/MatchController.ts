@@ -18,10 +18,8 @@ export class MatchController {
 
   startRound(): void {
     this.currentRoundMoves = [];
-    eventBus.publish(EventType.PHASE_STARTED, {
-      round: this.store.currentRound,
-      message: `Round ${this.store.currentRound} started`,
-    });
+    // Note: PHASE_STARTED for the actual first phase is published by PhaseController.reset()
+    // called from GameEngine.startNewRound(). No need to publish here.
   }
 
   /** Record a single move during the current round */

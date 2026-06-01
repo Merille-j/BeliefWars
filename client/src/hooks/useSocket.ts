@@ -170,7 +170,6 @@ export function useSocket() {
         body: JSON.stringify({ goalX, goalY }),
       });
       const data = await res.json();
-      console.log('[requestPath] response:', data);
       if (data.success && Array.isArray(data.path) && data.path.length > 0) {
         useGameStore.getState().setSuggestedPath(data.path);
       } else {

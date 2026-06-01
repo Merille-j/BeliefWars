@@ -130,7 +130,9 @@ export const PhaseIndicator: React.FC = () => {
             className={`font-mono font-black text-sm sm:text-base tabular-nums leading-none transition-colors duration-300 ${isUrgent ? 'text-red-400 animate-pulse' : ''}`}
             style={{ color: isUrgent ? undefined : activePhaseInfo?.timerColor }}
           >
-            {String(phaseTimeRemaining).padStart(2, '0')}s
+            {phaseTimeRemaining >= 60
+              ? `${Math.floor(phaseTimeRemaining / 60)}:${String(phaseTimeRemaining % 60).padStart(2, '0')}`
+              : `${String(phaseTimeRemaining).padStart(2, '0')}s`}
           </div>
         </div>
       </div>

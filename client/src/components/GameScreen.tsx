@@ -230,7 +230,7 @@ const ActiveEventDisplay: React.FC = () => {
             <div className="text-blue-300 text-xs mb-2">{plan.branches[0].condition}</div>
             <div className="space-y-1">
               {plan.branches[0].children && plan.branches[0].children.slice(0, 3).map((child, i) => (
-                <div key={i} className="text-blue-200 text-xs bg-blue-900 px-1.5 py-0.5 rounded truncate">
+                <div key={`seeker-branch-${i}`} className="text-blue-200 text-xs bg-blue-900 px-1.5 py-0.5 rounded truncate">
                   {child.action?.type === 'SCAN' && `📡 SCAN (${child.action.x},${child.action.y}) r=${child.action.radius}`}
                   {child.action?.type === 'LOCK' && `🔒 LOCK (${child.action.x},${child.action.y})`}
                   {!child.action && child.condition}

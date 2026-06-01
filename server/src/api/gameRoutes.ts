@@ -86,7 +86,7 @@ router.get('/recommendations', (_req: Request, res: Response) => {
  */
 router.post('/trigger-event', (_req: Request, res: Response) => {
   try {
-    const event = (gameEngine as any).triggerEvent ? gameEngine.triggerEvent() : null;
+    const event = gameEngine.triggerEvent();
     const state = gameEngine.getFullState();
     res.json({ success: true, event, state });
   } catch (err) {
@@ -96,7 +96,7 @@ router.post('/trigger-event', (_req: Request, res: Response) => {
 });
 
 /**
- * GET /api/game/pathfinding
+ * POST /api/game/pathfinding
  * Get A* pathfinding from Ghost's current position to a target.
  * Body: { goalX: number, goalY: number }
  */

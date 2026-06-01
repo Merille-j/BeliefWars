@@ -453,7 +453,13 @@ export class GameEngine {
 
     // Reset Seeker AP at the start of COLLAPSE phase
     if (newPhase === GamePhase.COLLAPSE) {
-      this.eventSystem.clearActiveEvent();
+      // Resolve any active nondeterministic event now that AND_OR_EVENTS has passed
+      const activeEvent = this.eventSystem.getActiveEvent();
+      if (activeEvent) {
+        this.eventSystem.resolveEvent(activeEvent);
+      } else {
+        this.eventSystem.clearActiveEvent();
+      }
       this.entityManager.resetAP(GameRole.SEEKER, 10);
     }
 
